@@ -3,6 +3,7 @@
 namespace Laravel\Nova\Notifications;
 
 use Laravel\Nova\Makeable;
+use Laravel\Nova\Nova;
 
 class NovaNotification extends \Illuminate\Notifications\Notification
 {
@@ -148,7 +149,7 @@ class NovaNotification extends \Illuminate\Notifications\Notification
             'component' => $this->component,
             'icon' => $this->icon,
             'message' => $this->message,
-            'actionText' => __($this->actionText),
+            'actionText' => Nova::__($this->actionText),
             'actionUrl' => $this->actionUrl,
             'type' => $this->type,
             'iconClass' => static::$types[$this->type],

@@ -1,6 +1,6 @@
 <template>
   <FilterContainer>
-    <div class="" @click="handleChange">
+    <div @click="handleChange">
       <label class="block">{{ filter.name }}</label>
 
       <IconBoolean
@@ -37,7 +37,7 @@ export default {
 
       this.$store.commit(`${this.resourceName}/updateFilterState`, {
         filterClass: this.filterKey,
-        value,
+        value: value ?? '',
       })
 
       this.$emit('change')

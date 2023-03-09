@@ -3,7 +3,7 @@
 namespace Laravel\Nova\Fields;
 
 use Illuminate\Http\Request;
-use Laravel\Nova\Contracts\ListableField;
+use Laravel\Nova\Contracts\BehavesAsPanel;
 use Laravel\Nova\Contracts\RelatableField;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
@@ -12,7 +12,7 @@ use Laravel\Nova\Panel;
 /**
  * @method static static make(mixed $name, string|null $attribute = null, string|null $resource = null)
  */
-class HasOneThrough extends Field implements ListableField, RelatableField
+class HasOneThrough extends Field implements RelatableField, BehavesAsPanel
 {
     /**
      * The field's component.
@@ -43,11 +43,25 @@ class HasOneThrough extends Field implements ListableField, RelatableField
     public $singularLabel;
 
     /**
+     * The resolved HasOneThrough Resource.
+     *
+     * @var \Laravel\Nova\Resource|null
+     */
+    public $hasOneThroughResource;
+
+    /**
      * The name of the Eloquent "has one through" relationship.
      *
      * @var string
      */
     public $hasOneThroughRelationship;
+
+    /**
+     * The key of the related Eloquent model.
+     *
+     * @var string|int|null
+     */
+    public $hasOneThroughId;
 
     /**
      * The callback used to determine if the HasOne field has already been filled.
@@ -130,7 +144,27 @@ class HasOneThrough extends Field implements ListableField, RelatableField
      */
     public function resolve($resource, $attribute = null)
     {
-        //
+        $value = null;
+
+        if ($resource->relationLoaded($this->attribute)) {
+            $value = $resource->getRelation($this->attribute);
+        }
+
+        if (! $value) {
+            $value = $resource->{$this->attribute}()->withoutGlobalScopes()->getResults();
+        }
+
+        if ($value) {
+            $this->alreadyFilledWhen(function () use ($value) {
+                return optional($value)->exists;
+            });
+
+            $this->hasOneThroughResource = new $this->resourceClass($value);
+
+            $this->hasOneThroughId = optional(ID::forResource($this->hasOneThroughResource))->value ?? $value->getKey();
+
+            $this->value = $this->hasOneThroughId;
+        }
     }
 
     /**
@@ -153,9 +187,8 @@ class HasOneThrough extends Field implements ListableField, RelatableField
      */
     public function asPanel()
     {
-        return Panel::make($this->name)
+        return Panel::make($this->name, [$this])
                     ->withMeta([
-                        'fields' => [$this],
                         'prefixComponent' => true,
                     ])->withComponent('relationship-panel');
     }
@@ -171,6 +204,9 @@ class HasOneThrough extends Field implements ListableField, RelatableField
             return array_merge([
                 'resourceName' => $this->resourceName,
                 'hasOneThroughRelationship' => $this->hasOneThroughRelationship,
+                'relationId' => $this->hasOneThroughId,
+                'hasOneThroughId' => $this->hasOneThroughId,
+                'authorizedToView' => optional($this->hasOneThroughResource)->authorizedToView($request) ?? true,
                 'relationshipType' => $this->relationshipType(),
                 'relatable' => true,
                 'singularLabel' => $this->singularLabel,
@@ -201,5 +237,17 @@ class HasOneThrough extends Field implements ListableField, RelatableField
     public function alreadyFilled(NovaRequest $request)
     {
         return call_user_func($this->filledCallback, $request) ?? false;
+    }
+
+    /**
+     * Check showing on index.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @param  mixed  $resource
+     * @return bool
+     */
+    public function isShownOnIndex(NovaRequest $request, $resource): bool
+    {
+        return false;
     }
 }

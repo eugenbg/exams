@@ -107,4 +107,49 @@ class Util
             return ! ($guard['driver'] === 'session' && $guard['provider'] === $provider);
         })->keys()->first();
     }
+
+    /**
+     * Get the dependent validation rules.
+     *
+     * @param  string  $attribute
+     * @return array<string, string>
+     *
+     * @see \Illuminate\Validation\Validator::$dependentRules
+     */
+    public static function dependentRules($attribute)
+    {
+        return collect([
+            'After',
+            'AfterOrEqual',
+            'Before',
+            'BeforeOrEqual',
+            'Confirmed',
+            'Different',
+            'ExcludeIf',
+            'ExcludeUnless',
+            'ExcludeWith',
+            'ExcludeWithout',
+            'Gt',
+            'Gte',
+            'Lt',
+            'Lte',
+            'AcceptedIf',
+            'DeclinedIf',
+            'RequiredIf',
+            'RequiredUnless',
+            'RequiredWith',
+            'RequiredWithAll',
+            'RequiredWithout',
+            'RequiredWithoutAll',
+            'Prohibited',
+            'ProhibitedIf',
+            'ProhibitedUnless',
+            'Prohibits',
+            'Same',
+        ])->mapWithKeys(function ($rule) use ($attribute) {
+            $rule = Str::snake($rule);
+
+            return ["{$rule}:" => "{$rule}:{$attribute}."];
+        })->all();
+    }
 }

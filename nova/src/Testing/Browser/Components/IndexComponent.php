@@ -36,7 +36,7 @@ class IndexComponent extends Component
         $selector = '[dusk="'.$this->resourceName.'-index-component"]';
 
         return sprintf(
-           (! is_null($this->viaRelationship) ? '%s[data-relationship="%s"]' : '%s'), $selector, $this->viaRelationship
+            (! is_null($this->viaRelationship) ? '%s[data-relationship="%s"]' : '%s'), $selector, $this->viaRelationship
         );
     }
 
@@ -135,12 +135,9 @@ class IndexComponent extends Component
      */
     public function selectAllOnCurrentPage(Browser $browser)
     {
-        $browser->click('[dusk="select-all-dropdown"]')
-                        ->elsewhereWhenAvailable('[dusk="select-all-button"]', function ($browser) {
-                            $browser->check('input[type="checkbox"]');
-                        })
-                        ->pause(250)
-                        ->closeCurrentDropdown();
+        $browser->within(new SelectAllDropdownComponent(), function ($browser) {
+            $browser->selectAllOnCurrentPage();
+        });
     }
 
     /**
@@ -151,12 +148,9 @@ class IndexComponent extends Component
      */
     public function unselectAllOnCurrentPage(Browser $browser)
     {
-        $browser->click('[dusk="select-all-dropdown"]')
-                        ->elsewhereWhenAvailable('[dusk="select-all-button"]', function ($browser) {
-                            $browser->uncheck('input[type="checkbox"]');
-                        })
-                        ->pause(250)
-                        ->closeCurrentDropdown();
+        $browser->within(new SelectAllDropdownComponent(), function ($browser) {
+            $browser->unselectAllOnCurrentPage();
+        });
     }
 
     /**
@@ -167,12 +161,9 @@ class IndexComponent extends Component
      */
     public function selectAllMatching(Browser $browser)
     {
-        $browser->click('[dusk="select-all-dropdown"]')
-                        ->elsewhereWhenAvailable('[dusk="select-all-matching-button"]', function ($browser) {
-                            $browser->check('input[type="checkbox"]');
-                        })
-                        ->pause(250)
-                        ->closeCurrentDropdown();
+        $browser->within(new SelectAllDropdownComponent(), function ($browser) {
+            $browser->selectAllMatching();
+        });
     }
 
     /**
@@ -183,12 +174,23 @@ class IndexComponent extends Component
      */
     public function unselectAllMatching(Browser $browser)
     {
-        $browser->click('[dusk="select-all-dropdown"]')
-                        ->elsewhereWhenAvailable('[dusk="select-all-matching-button"]', function ($browser) {
-                            $browser->uncheck('input[type="checkbox"]');
-                        })
-                        ->pause(250)
-                        ->closeCurrentDropdown();
+        $browser->within(new SelectAllDropdownComponent(), function ($browser) {
+            $browser->unselectAllMatching();
+        });
+    }
+
+    /**
+     * Assert on the matching total matching count text.
+     *
+     * @param  \Laravel\Dusk\Browser  $browser
+     * @param  int  $count
+     * @return void
+     */
+    public function assertSelectAllMatchingCount(Browser $browser, $count)
+    {
+        $browser->within(new SelectAllDropdownComponent(), function ($browser) use ($count) {
+            $browser->assertSelectAllMatchingCount($count);
+        });
     }
 
     /**
@@ -347,8 +349,9 @@ class IndexComponent extends Component
      */
     public function selectAction(Browser $browser, $uriKey, $fieldCallback)
     {
-        $browser->waitFor('@action-select')
-                    ->select('select[dusk="action-select"]', $uriKey);
+        $browser->whenAvailable('select[dusk="action-select"]', function ($browser) use ($uriKey) {
+            $browser->select('', $uriKey);
+        });
 
         $browser->elsewhereWhenAvailable('.modal[data-modal-open=true]', function ($browser) use ($fieldCallback) {
             $fieldCallback($browser);
@@ -595,21 +598,6 @@ class IndexComponent extends Component
         } else {
             $browser->assertMissing('@'.$id.'-row');
         }
-    }
-
-    /**
-     * Assert on the matching total matching count text.
-     *
-     * @param  \Laravel\Dusk\Browser  $browser
-     * @param  int  $count
-     * @return void
-     */
-    public function assertSelectAllMatchingCount(Browser $browser, $count)
-    {
-        $browser->click('@select-all-dropdown')
-                        ->elsewhereWhenAvailable('@select-all-matching-button', function (Browser $browser) use ($count) {
-                            $browser->assertSeeIn('span:nth-child(2)', $count);
-                        });
     }
 
     /**

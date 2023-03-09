@@ -3,6 +3,7 @@
     :field="currentField"
     :errors="errors"
     :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
   >
     <template #field>
       <div class="flex items-center">
@@ -34,6 +35,7 @@
 import isNil from 'lodash/isNil'
 import { DateTime } from 'luxon'
 import { DependentFormField, HandlesValidationErrors } from '@/mixins'
+import filled from '@/util/filled'
 
 export default {
   mixins: [HandlesValidationErrors, DependentFormField],
@@ -108,9 +110,5 @@ export default {
       return Nova.config('userTimezone') || Nova.config('timezone')
     },
   },
-}
-
-function filled(value) {
-  return !isNil(value) && value !== ''
 }
 </script>

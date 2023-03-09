@@ -11,6 +11,7 @@ use Laravel\Nova\Http\Requests\ActionRequest;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
 use Laravel\Nova\Util;
+use Stringable;
 
 /**
  * @property \Illuminate\Database\Eloquent\Model $target
@@ -111,8 +112,12 @@ class ActionEvent extends Model
             'model_type' => $model->getMorphClass(),
             'model_id' => $model->getKey(),
             'fields' => '',
-            'original' => array_diff_key(array_intersect_key($model->getRawOriginal(), $model->getDirty()), array_flip($model->getHidden())),
-            'changes' => array_diff_key($model->getDirty(), array_flip($model->getHidden())),
+            'changes' => static::hydrateChangesPayload(
+                $changes = array_diff_key($model->getDirty(), array_flip($model->getHidden()))
+            ),
+            'original' => static::hydrateChangesPayload(
+                array_intersect_key($model->newInstance()->setRawAttributes($model->getRawOriginal())->attributesToArray(), $changes)
+            ),
             'status' => 'finished',
             'exception' => '',
         ]);
@@ -167,8 +172,12 @@ class ActionEvent extends Model
             'model_type' => $pivot->getMorphClass(),
             'model_id' => $pivot->getKey(),
             'fields' => '',
-            'original' => array_diff_key(array_intersect_key($pivot->getRawOriginal(), $pivot->getDirty()), $pivot->getHidden()),
-            'changes' => array_diff_key($pivot->attributesToArray(), $pivot->getHidden()),
+            'changes' => static::hydrateChangesPayload(
+                $changes = array_diff_key($pivot->getDirty(), array_flip($pivot->getHidden()))
+            ),
+            'original' => static::hydrateChangesPayload(
+                array_intersect_key($pivot->newInstance()->setRawAttributes($pivot->getRawOriginal())->attributesToArray(), $changes)
+            ),
             'status' => 'finished',
             'exception' => '',
         ]);
@@ -278,7 +287,7 @@ class ActionEvent extends Model
      * @return void
      */
     public static function createForModels(ActionRequest $request, Action $action,
-                                           $batchId, Collection $models, $status = 'running')
+        $batchId, Collection $models, $status = 'running')
     {
         $models = $models->map(function ($model) use ($request, $action, $batchId, $status) {
             return array_merge(
@@ -308,7 +317,7 @@ class ActionEvent extends Model
      * @return array<string, mixed>
      */
     public static function defaultAttributes(ActionRequest $request, Action $action,
-                                             $batchId, $status = 'running')
+        $batchId, $status = 'running')
     {
         if ($request->isPivotAction()) {
             $pivotClass = $request->pivotRelation()->getPivotClass();
@@ -455,5 +464,27 @@ class ActionEvent extends Model
     public function getTable()
     {
         return 'action_events';
+    }
+
+    /**
+     * Hydrate the changes payuload.
+     *
+     * @param  array  $attributes
+     * @return array
+     */
+    protected static function hydrateChangesPayload(array $attributes)
+    {
+        return collect($attributes)
+                ->transform(function ($value) {
+                    if (is_object($value) && ($value instanceof Stringable || method_exists($value, '__toString'))) {
+                        return (string) $value;
+                    } elseif (is_object($value) || is_array($value)) {
+                        return rescue(function () use ($value) {
+                            return json_encode($value);
+                        }, $value);
+                    }
+
+                    return $value;
+                })->all();
     }
 }

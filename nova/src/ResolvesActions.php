@@ -19,9 +19,11 @@ trait ResolvesActions
     {
         $resource = $this->resource;
 
-        $request->mergeIfMissing(array_filter([
-            'resourceId' => optional($resource)->getKey(),
-        ]));
+        if (method_exists($resource, 'getKey')) {
+            $request->mergeIfMissing(array_filter([
+                'resourceId' => $resource->getKey(),
+            ]));
+        }
 
         $actions = $this->resolveActions($request)
                     ->filter->authorizedToSee($request);

@@ -18,6 +18,7 @@ use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\MorphMany;
 use Laravel\Nova\Fields\MorphTo;
 use Laravel\Nova\Fields\MorphToMany;
+use Laravel\Nova\Fields\Unfillable;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
 trait ResolvesFields
@@ -31,7 +32,7 @@ trait ResolvesFields
     public function indexFields(NovaRequest $request)
     {
         return $this->availableFields($request)
-            ->when($request->viaRelationship(), $this->relatedFieldResolverCallback($request))
+            ->when($request->viaManyToMany(), $this->relatedFieldResolverCallback($request))
             ->filterForIndex($request, $this->resource)
             ->withoutListableFields()
             ->authorized($request)
@@ -47,13 +48,35 @@ trait ResolvesFields
     public function detailFields(NovaRequest $request)
     {
         return $this->availableFields($request)
-            ->when($request->viaRelationship(), $this->fieldResolverCallback($request))
+            ->when($request->viaManyToMany(), $this->fieldResolverCallback($request))
             ->when($this->shouldAddActionsField($request), function ($fields) {
                 return $fields->push($this->actionfield());
             })
             ->filterForDetail($request, $this->resource)
             ->authorized($request)
             ->resolveForDisplay($this->resource);
+    }
+
+    /**
+     * Resolve the authorized preview fields.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
+     */
+    protected function previewFieldsCollection(NovaRequest $request)
+    {
+        // If the user has specified the `fieldsForPreview` method, we're going to ignore any fields
+        // using `showOnPreview` inside the resource's `fields`, `fieldsForIndex`, and `fieldsForDetail` methods.
+        if (method_exists($this, 'fieldsForPreview')) {
+            return FieldCollection::make(array_values($this->filter($this->fieldsForPreview($request))));
+        }
+
+        return $this->buildAvailableFields($request, ['fieldsForIndex', 'fieldsForDetail'])
+                    ->when($request->viaManyToMany(), $this->fieldResolverCallback($request))
+                    ->withoutResourceTools()
+                    ->withoutListableFields()
+                    ->filter
+                    ->isShownOnPreview($request, $this->resource);
     }
 
     /**
@@ -64,11 +87,7 @@ trait ResolvesFields
      */
     public function previewFields(NovaRequest $request)
     {
-        return $this->buildAvailableFields($request, ['fieldsForDetail'])
-            ->when($request->viaRelationship(), $this->fieldResolverCallback($request))
-            ->withoutResourceTools()
-            ->withoutListableFields()
-            ->filterForPreview($request, $this->resource)
+        return $this->previewFieldsCollection($request)
             ->authorized($request)
             ->resolveForDisplay($this->resource);
     }
@@ -81,11 +100,57 @@ trait ResolvesFields
      */
     public function previewFieldsCount(NovaRequest $request)
     {
-        return $this->buildAvailableFields($request, ['fieldsForDetail'])
-            ->when($request->viaRelationship(), $this->fieldResolverCallback($request))
-            ->withoutResourceTools()
-            ->withoutListableFields()
-            ->filterForPreview($request, $this->resource)
+        return $this->previewFieldsCollection($request)
+            ->authorized($request)
+            ->count();
+    }
+
+    /**
+     * Resolve the authorized preview fields.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
+     */
+    protected function peekableFieldsCollection(NovaRequest $request)
+    {
+        // If the user has specified the `fieldsForPeeking` method, we're going to ignore any fields
+        // using `showWhenPeeking` inside the resource's `fields`, `fieldsForIndex`, and `fieldsForDetail` methods.
+        if (method_exists($this, 'fieldsForPeeking')) {
+            return FieldCollection::make(array_values($this->filter($this->fieldsForPeeking($request))));
+        } else {
+            return $this->buildAvailableFields($request, ['fieldsForIndex', 'fieldsForDetail'])
+                    ->when($request->viaManyToMany(), $this->fieldResolverCallback($request))
+                    ->withoutResourceTools()
+                    ->withoutListableFields()
+                    ->filterForPeeking($request);
+        }
+    }
+
+    /**
+     * Resolve the peekable fields.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
+     */
+    public function peekableFields(NovaRequest $request)
+    {
+        return $this->peekableFieldsCollection($request)
+            ->authorized($request)
+            ->resolveForDisplay($this->resource)
+                ->each(function ($field) {
+                    $field->copyable = false;
+                });
+    }
+
+    /**
+     * Return the count of peekable fields available.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @return int
+     */
+    public function peekableFieldsCount(NovaRequest $request)
+    {
+        return $this->peekableFieldsCollection($request)
             ->authorized($request)
             ->count();
     }
@@ -94,12 +159,15 @@ trait ResolvesFields
      * Resolve the deletable fields.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
+     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field&\Laravel\Nova\Contracts\Deletable>
      */
     public function deletableFields(NovaRequest $request)
     {
         return $this->availableFieldsOnIndexOrDetail($request)
-            ->when($request->viaRelationship(), $this->fieldResolverCallback($request))
+            ->when($request->viaManyToMany(), $this->fieldResolverCallback($request))
+            ->reject(function ($field) {
+                return $field instanceof Unfillable;
+            })
             ->whereInstanceOf(Deletable::class)
             ->unique(function ($field) {
                 return $field->attribute;
@@ -112,12 +180,12 @@ trait ResolvesFields
      * Resolve the downloadable fields.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
+     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field&\Laravel\Nova\Contracts\Downloadable>
      */
     public function downloadableFields(NovaRequest $request)
     {
         return $this->availableFieldsOnIndexOrDetail($request)
-            ->when($request->viaRelationship(), $this->fieldResolverCallback($request))
+            ->when($request->viaManyToMany(), $this->fieldResolverCallback($request))
             ->whereInstanceOf(Downloadable::class)
             ->unique(function ($field) {
                 return $field->attribute;
@@ -135,7 +203,7 @@ trait ResolvesFields
     public function filterableFields(NovaRequest $request)
     {
         return $this->availableFieldsOnIndexOrDetail($request)
-            ->when($request->viaRelationship(), function ($fields) use ($request) {
+            ->when($request->viaManyToMany(), function ($fields) use ($request) {
                 $relatedField = $request->findParentResource()->relatableField($request, $request->viaRelationship);
 
                 if (! is_null($relatedField)) {
@@ -161,7 +229,7 @@ trait ResolvesFields
     public function relatableField(NovaRequest $request, $attribute)
     {
         return $this->availableFieldsOnIndexOrDetail($request)
-            ->when($request->viaRelationship(), $this->fieldResolverCallback($request))
+            ->when($request->viaManyToMany(), $this->fieldResolverCallback($request))
             ->whereInstanceOf(RelatableField::class)
             ->when($this->shouldAddActionsField($request), function ($fields) {
                 return $fields->push($this->actionfield());
@@ -203,7 +271,7 @@ trait ResolvesFields
      */
     protected function actionfield()
     {
-        return MorphMany::make(__('Actions'), 'actions', Nova::actionResource())
+        return MorphMany::make(Nova::__('Actions'), 'actions', Nova::actionResource())
             ->canSee(function ($request) {
                 return Nova::actionResource()::authorizedToViewAny($request);
             });
@@ -234,10 +302,10 @@ trait ResolvesFields
      */
     public function creationFields(NovaRequest $request)
     {
-        $fields = $this->removeNonCreationFields(
-            $request,
-            $this->availableFields($request)->authorized($request)
-        )->resolve($this->resource);
+        $fields = $this->availableFields($request)
+            ->authorized($request)
+            ->onlyCreateFields($request, $this->resource)
+            ->resolve($this->resource);
 
         return $request->viaRelationship()
             ? $this->withPivotFields($request, $fields->all())
@@ -277,28 +345,8 @@ trait ResolvesFields
      */
     public function creationPivotFields(NovaRequest $request, $relatedResource)
     {
-        return $this->removeNonCreationFields(
-            $request,
-            $this->resolvePivotFields($request, $relatedResource)
-        );
-    }
-
-    /**
-     * Remove non-creation fields from the given collection.
-     *
-     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @param  \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>  $fields
-     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
-     */
-    protected function removeNonCreationFields(NovaRequest $request, FieldCollection $fields)
-    {
-        return $fields->reject(function ($field) use ($request) {
-            return $field instanceof ListableField ||
-                ($field instanceof ResourceTool || $field instanceof ResourceToolElement) ||
-                $field->attribute === 'ComputedField' ||
-                ($field instanceof ID && $field->attribute === $this->resource->getKeyName()) ||
-                ! $field->isShownOnCreation($request);
-        });
+        return $this->resolvePivotFields($request, $relatedResource)
+            ->onlyCreateFields($request, $this->resource);
     }
 
     /**
@@ -309,9 +357,8 @@ trait ResolvesFields
      */
     public function updateFields(NovaRequest $request)
     {
-        return $this->resolveFields($request, function ($fields) use ($request) {
-            return $this->removeNonUpdateFields($request, $fields);
-        });
+        return $this->resolveFields($request)
+                    ->onlyUpdateFields($request, $this->resource);
     }
 
     /**
@@ -348,28 +395,8 @@ trait ResolvesFields
      */
     public function updatePivotFields(NovaRequest $request, $relatedResource)
     {
-        return $this->removeNonUpdateFields(
-            $request,
-            $this->resolvePivotFields($request, $relatedResource)
-        );
-    }
-
-    /**
-     * Remove non-update fields from the given collection.
-     *
-     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @param  \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>  $fields
-     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
-     */
-    protected function removeNonUpdateFields(NovaRequest $request, FieldCollection $fields)
-    {
-        return $fields->reject(function ($field) use ($request) {
-            return $field instanceof ListableField ||
-                ($field instanceof ResourceTool || $field instanceof ResourceToolElement) ||
-                $field->attribute === 'ComputedField' ||
-                ($field instanceof ID && $field->attribute === $this->resource->getKeyName()) ||
-                ! $field->isShownOnUpdate($request, $this->resource);
-        });
+        return $this->resolvePivotFields($request, $relatedResource)
+                    ->onlyUpdateFields($request, $this->resource);
     }
 
     /**
@@ -393,7 +420,7 @@ trait ResolvesFields
      * Resolve the given fields to their values.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @param  (\Closure(\Laravel\Nova\Fields\FieldCollection):\Laravel\Nova\Fields\FieldCollection)|null  $filter
+     * @param  (\Closure(\Laravel\Nova\Fields\FieldCollection):(\Laravel\Nova\Fields\FieldCollection))|null  $filter
      * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
      */
     protected function resolveFields(NovaRequest $request, Closure $filter = null)
@@ -538,12 +565,9 @@ trait ResolvesFields
     {
         $method = $this->fieldsMethod($request);
 
-        $fields = $fields ?? $this->removeNonCreationFields(
-            $request,
-            FieldCollection::make(value(function () use ($request, $method) {
-                return array_values($this->{$method}($request));
-            }))
-        );
+        $fields = $fields ?? FieldCollection::make(value(function () use ($request, $method) {
+            return array_values($this->{$method}($request));
+        }))->onlyCreateFields($request, $this->resource);
 
         return $this->resolvePanelsFromFields(
             $request,
@@ -564,12 +588,9 @@ trait ResolvesFields
     {
         $method = $this->fieldsMethod($request);
 
-        $fields = $fields ?? $this->removeNonUpdateFields(
-            $request,
-            FieldCollection::make(value(function () use ($request, $method) {
-                return array_values($this->{$method}($request));
-            }))
-        );
+        $fields = $fields ?? FieldCollection::make(value(function () use ($request, $method) {
+            return array_values($this->{$method}($request));
+        }))->onlyUpdateFields($request, $this->resource);
 
         return $this->resolvePanelsFromFields(
             $request,
@@ -738,7 +759,8 @@ trait ResolvesFields
             });
 
         if ($field && isset($field->fieldsCallback)) {
-            $pivotRelation = $this->resource->{$field->manyToManyRelationship}();
+            $model = $this->model() ?? static::newModel();
+            $pivotRelation = $model->{$field->manyToManyRelationship}();
             $field->pivotAccessor = $pivotAccessor = $pivotRelation->getPivotAccessor();
 
             return FieldCollection::make(array_values(
@@ -842,13 +864,11 @@ trait ResolvesFields
      */
     protected function resolvePanelsFromFields(NovaRequest $request, FieldCollection $fields, $label)
     {
-        [$relationPanels, $fields] = $fields->transform(function ($field) {
-            return $field instanceof BehavesAsPanel ? $field->asPanel() : $field;
+        [$defaultFields, $fieldsWithPanels] = $fields->each(function ($field) {
+            if ($field instanceof BehavesAsPanel) {
+                $field->asPanel();
+            }
         })->partition(function ($field) {
-            return $field instanceof Panel;
-        });
-
-        [$defaultFields, $fieldsWithPanels] = $fields->partition(function ($field) {
             return ! isset($field->panel) || blank($field->panel);
         });
 
@@ -859,7 +879,7 @@ trait ResolvesFields
         })->toBase();
 
         return $this->panelsWithDefaultLabel(
-            $panels->merge($relationPanels),
+            $panels,
             $defaultFields->values(),
             $label
         );

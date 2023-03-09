@@ -6,7 +6,7 @@ use Brick\Money\Context;
 use Brick\Money\Context\CustomContext;
 use Brick\Money\Money;
 use NumberFormatter;
-use Symfony\Component\Intl\Currencies;
+use Symfony\Polyfill\Intl\Icu\Currencies;
 
 class Currency extends Number
 {
@@ -64,7 +64,7 @@ class Currency extends Number
      *
      * @param  string  $name
      * @param  string|\Closure|callable|object|null  $attribute
-     * @param  (callable(mixed, mixed, ?string):mixed)|null  $resolveCallback
+     * @param  (callable(mixed, mixed, ?string):(mixed))|null  $resolveCallback
      * @return void
      */
     public function __construct($name, $attribute = null, $resolveCallback = null)
@@ -78,7 +78,7 @@ class Currency extends Number
             ->fillUsing(function ($request, $model, $attribute, $requestAttribute) {
                 $value = $request->$requestAttribute;
 
-                if ($this->minorUnits && ! $this->isNullValue($value)) {
+                if ($this->minorUnits && ! $this->isValidNullValue($value)) {
                     $model->$attribute = $this->toMoneyInstance(
                         $value * (10 ** Currencies::getFractionDigits($this->currency)),
                         $this->currency
@@ -88,10 +88,10 @@ class Currency extends Number
                 }
             })
             ->displayUsing(function ($value) {
-                return ! $this->isNullValue($value) ? $this->formatMoney($value) : null;
+                return ! $this->isValidNullValue($value) ? $this->formatMoney($value) : null;
             })
             ->resolveUsing(function ($value) {
-                if ($this->isNullValue($value) || ! $this->minorUnits) {
+                if ($this->isValidNullValue($value) || ! $this->minorUnits) {
                     return $value;
                 }
 
@@ -240,13 +240,13 @@ class Currency extends Number
      * @param  mixed  $value
      * @return bool
      */
-    protected function isNullValue($value)
+    public function isValidNullValue($value)
     {
         if (is_null($value)) {
             return true;
         }
 
-        return parent::isNullValue($value);
+        return parent::isValidNullValue($value);
     }
 
     /**
@@ -268,7 +268,6 @@ class Currency extends Number
     {
         return array_merge(parent::jsonSerialize(), [
             'currency' => $this->resolveCurrencySymbol(),
-            'currency_name' => Currencies::getName($this->currency),
         ]);
     }
 }

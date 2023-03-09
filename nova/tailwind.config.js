@@ -38,6 +38,7 @@ module.exports = {
     },
   },
   plugins: [
+    require('@tailwindcss/typography'),
     function ({ addBase }) {
       addBase({ ':root': generateRootCSSVars() })
     },

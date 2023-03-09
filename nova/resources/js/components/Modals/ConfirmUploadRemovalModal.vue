@@ -3,6 +3,7 @@
     :show="show"
     data-testid="confirm-upload-removal-modal"
     role="alertdialog"
+    size="md"
   >
     <div
       class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"

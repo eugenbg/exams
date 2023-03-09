@@ -85,6 +85,7 @@
           :clear-selected-filters="clearSelectedFilters"
           :close-delete-modal="closeDeleteModal"
           :currently-polling="currentlyPolling"
+          :current-page-count="resources.length"
           :delete-all-matching-resources="deleteAllMatchingResources"
           :delete-selected-resources="deleteSelectedResources"
           :filter-changed="filterChanged"
@@ -104,6 +105,7 @@
           :restore-all-matching-resources="restoreAllMatchingResources"
           :restore-selected-resources="restoreSelectedResources"
           :select-all-matching-checked="selectAllMatchingResources"
+          @deselect="clearResourceSelections"
           :selected-resources="selectedResources"
           :selected-resources-for-action-selector="
             selectedResourcesForActionSelector
@@ -171,8 +173,8 @@
             />
 
             <ResourcePagination
+              v-if="shouldShowPagination"
               :pagination-component="paginationComponent"
-              :should-show-pagination="shouldShowPagination"
               :has-next-page="hasNextPage"
               :has-previous-page="hasPreviousPage"
               :load-more="loadMore"
@@ -192,8 +194,7 @@
 </template>
 
 <script>
-import debounce from 'lodash/debounce'
-import { CancelToken, Cancel } from 'axios'
+import { CancelToken, isCancel } from 'axios'
 import {
   HasCards,
   Paginatable,
@@ -237,8 +238,6 @@ export default {
   },
 
   data: () => ({
-    debouncer: null,
-    search: '',
     lenses: [],
     sortable: true,
     actionCanceller: null,
@@ -256,20 +255,12 @@ export default {
       return
     }
 
-    this.debouncer = debounce(
-      callback => callback(),
-      this.resourceInformation.debounce
-    )
-
-    this.$watch('search', newValue => {
-      this.search = newValue
-      this.performSearch()
-    })
-
     // Bind the keydown event listener when the router is visited if this
     // component is not a relation on a Detail page
     if (this.shouldEnableShortcut === true) {
       Nova.addShortcut('c', this.handleKeydown)
+      Nova.addShortcut('mod+a', this.toggleSelectAll)
+      Nova.addShortcut('mod+shift+a', this.toggleSelectAllMatching)
     }
 
     this.getLenses()
@@ -285,6 +276,8 @@ export default {
   beforeUnmount() {
     if (this.shouldEnableShortcut) {
       Nova.disableShortcut('c')
+      Nova.disableShortcut('mod+a')
+      Nova.disableShortcut('mod+shift+a')
     }
 
     Nova.$off('refresh-resources', this.getResources)
@@ -344,7 +337,7 @@ export default {
             this.handleResourcesLoaded()
           })
           .catch(e => {
-            if (e instanceof Cancel) {
+            if (isCancel(e)) {
               return
             }
 
@@ -442,7 +435,7 @@ export default {
           this.resourceHasActions = response.data.counts.resource > 0
         })
         .catch(e => {
-          if (e instanceof Cancel) {
+          if (isCancel(e)) {
             return
           }
 
@@ -504,7 +497,15 @@ export default {
       this.toggleCollapse()
 
       if (!this.collapsed) {
-        await this.getResources()
+        if (!this.filterHasLoaded) {
+          await this.initializeFilters(null)
+          if (!this.hasFilters) {
+            await this.getResources()
+          }
+        } else {
+          await this.getResources()
+        }
+
         await this.getAuthorizationToRelate()
         await this.getActions()
         this.restartPolling()
@@ -531,6 +532,10 @@ export default {
      */
     shouldBeCollapsed() {
       return this.collapsed && this.viaRelationship != null
+    },
+
+    collapsedByDefault() {
+      return this.field?.collapsedByDefault ?? false
     },
 
     /**
@@ -576,7 +581,7 @@ export default {
      * Return the heading for the view
      */
     headingTitle() {
-      if (this.loading) {
+      if (this.initialLoading) {
         return '&nbsp;'
       } else {
         if (this.isRelation && this.field) {

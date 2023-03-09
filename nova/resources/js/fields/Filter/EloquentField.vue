@@ -16,6 +16,7 @@
         :clearable="true"
         trackBy="value"
         class="w-full"
+        mode="modal"
       >
         <div v-if="selectedResource" class="flex items-center">
           <div v-if="selectedResource.avatar" class="mr-3">
@@ -148,11 +149,13 @@ export default {
         }
       }
 
-      this.getAvailableResources().then(() => {
-        if (shouldSelectInitialResource === true) {
-          this.selectInitialResource()
-        }
-      })
+      if (!this.isSearchable || shouldSelectInitialResource) {
+        this.getAvailableResources().then(() => {
+          if (shouldSelectInitialResource === true) {
+            this.selectInitialResource()
+          }
+        })
+      }
     },
 
     /**

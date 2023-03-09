@@ -3,6 +3,7 @@
     :field="currentField"
     :errors="errors"
     :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
   >
     <template #field>
       <input
@@ -14,22 +15,34 @@
         :id="currentField.uniqueKey"
         :dusk="field.attribute"
         :disabled="currentlyIsReadonly"
-        :list="`${field.attribute}-list`"
       />
+
+      <datalist v-if="suggestions.length > 0" :id="suggestionsId">
+        <option
+          :key="suggestion"
+          v-for="suggestion in suggestions"
+          :value="suggestion"
+        />
+      </datalist>
     </template>
   </DefaultField>
 </template>
 
 <script>
-import { DependentFormField, HandlesValidationErrors } from '@/mixins'
+import {
+  DependentFormField,
+  FieldSuggestions,
+  HandlesValidationErrors,
+} from '@/mixins'
 
 export default {
-  mixins: [HandlesValidationErrors, DependentFormField],
+  mixins: [DependentFormField, FieldSuggestions, HandlesValidationErrors],
 
   computed: {
     defaultAttributes() {
       return {
         class: this.errorClasses,
+        ...this.suggestionsAttributes,
       }
     },
   },

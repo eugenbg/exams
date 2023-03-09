@@ -3,7 +3,6 @@
   <div class="border-t border-gray-200 dark:border-gray-700">
     <component
       :is="paginationComponent"
-      v-if="shouldShowPagination"
       :next="hasNextPage"
       :previous="hasPreviousPage"
       @load-more="loadMore"
@@ -19,7 +18,7 @@
         v-if="resourceCountLabel"
         class="text-xs px-4"
         :class="{
-          'ml-auto': paginationComponent == 'pagination-links',
+          'ml-auto': paginationComponent === 'pagination-links',
         }"
       >
         {{ resourceCountLabel }}
@@ -32,7 +31,6 @@
 export default {
   props: [
     'paginationComponent',
-    'shouldShowPagination',
     'hasNextPage',
     'hasPreviousPage',
     'loadMore',

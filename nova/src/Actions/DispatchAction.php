@@ -45,7 +45,7 @@ class DispatchAction
     /**
      * Set dispatchable callback.
      *
-     * @var (callable(\Laravel\Nova\Actions\Response):mixed)|null
+     * @var (callable(\Laravel\Nova\Actions\Response):(mixed))|null
      */
     protected $dispatchableCallback;
 

@@ -2,7 +2,7 @@
   <div>
     <component
       :key="`${field.attribute}:${resourceId}`"
-      :is="'detail-' + field.component"
+      :is="`detail-${field.component}`"
       :resource-name="resourceName"
       :resource-id="resourceId"
       :resource="resource"

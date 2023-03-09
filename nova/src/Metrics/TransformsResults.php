@@ -2,6 +2,8 @@
 
 namespace Laravel\Nova\Metrics;
 
+use Laravel\SerializableClosure\SerializableClosure;
+
 trait TransformsResults
 {
     /**
@@ -19,7 +21,7 @@ trait TransformsResults
      */
     public function transform($transformCallback)
     {
-        $this->transformCallback = $transformCallback;
+        $this->transformCallback = new SerializableClosure($transformCallback);
 
         return $this;
     }

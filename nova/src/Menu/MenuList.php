@@ -2,6 +2,7 @@
 
 namespace Laravel\Nova\Menu;
 
+use Laravel\Nova\AuthorizedToSee;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Makeable;
 
@@ -10,6 +11,7 @@ use Laravel\Nova\Makeable;
  */
 class MenuList implements \JsonSerializable
 {
+    use AuthorizedToSee;
     use Makeable;
 
     /**
@@ -22,7 +24,7 @@ class MenuList implements \JsonSerializable
     /**
      * The menu's items.
      *
-     * @var \Illuminate\Support\Collection
+     * @var \Laravel\Nova\Menu\MenuCollection
      */
     public $items;
 
@@ -44,7 +46,7 @@ class MenuList implements \JsonSerializable
      */
     public function items($items = [])
     {
-        $this->items = collect($items);
+        $this->items = new MenuCollection($items);
 
         return $this;
     }
@@ -60,9 +62,7 @@ class MenuList implements \JsonSerializable
 
         return [
             'component' => $this->component,
-            'items' => $this->items->reject(function ($item) use ($request) {
-                return method_exists($item, 'authorizedToSee') && ! $item->authorizedToSee($request);
-            })->values(),
+            'items' => $this->items->authorized($request)->withoutEmptyItems()->all(),
         ];
     }
 }

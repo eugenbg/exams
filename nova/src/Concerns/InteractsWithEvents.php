@@ -11,7 +11,7 @@ trait InteractsWithEvents
     /**
      * Register an event listener for the Nova "booted" event.
      *
-     * @param  (\Closure(\Laravel\Nova\Events\NovaServiceProviderRegistered):void)|string  $callback
+     * @param  (\Closure(\Laravel\Nova\Events\NovaServiceProviderRegistered):(void))|string  $callback
      * @return void
      */
     public static function booted($callback)
@@ -22,7 +22,7 @@ trait InteractsWithEvents
     /**
      * Register an event listener for the Nova "serving" event.
      *
-     * @param  (\Closure(\Laravel\Nova\Events\ServingNova):void)|string  $callback
+     * @param  (\Closure(\Laravel\Nova\Events\ServingNova):(void))|string  $callback
      * @return void
      */
     public static function serving($callback)

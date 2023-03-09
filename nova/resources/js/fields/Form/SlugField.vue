@@ -1,5 +1,10 @@
 <template>
-  <DefaultField :field="field" :errors="errors" :show-help-text="showHelpText">
+  <DefaultField
+    :field="field"
+    :errors="errors"
+    :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
+  >
     <template #field>
       <div class="flex items-center">
         <input
@@ -13,7 +18,7 @@
         />
 
         <button
-          class="rounded px-1 py-1 inline-flex text-sm text-gray-500 ml-1 mt-2"
+          class="rounded inline-flex text-sm ml-3 link-default"
           v-if="field.showCustomizeButton"
           type="button"
           @click="toggleCustomizeClick"
@@ -27,13 +32,14 @@
 
 <script>
 import { FormField, HandlesValidationErrors } from '@/mixins'
-import slugify from '@/util/slugify'
+import debounce from 'lodash/debounce'
 
 export default {
   mixins: [HandlesValidationErrors, FormField],
 
   data: () => ({
     isListeningToChanges: false,
+    debouncedHandleChange: null,
   }),
 
   mounted() {
@@ -47,14 +53,19 @@ export default {
   },
 
   methods: {
-    changeListener(value) {
-      return value => {
-        this.value = slugify(value, this.field.separator)
-      }
+    async fetchPreviewContent(value) {
+      const {
+        data: { preview },
+      } = await Nova.request().post(
+        `/nova-api/${this.resourceName}/field/${this.field.attribute}/preview`,
+        { value: value ?? 'Poop' }
+      )
+
+      return preview
     },
 
     registerChangeListener() {
-      Nova.$on(this.eventName, this.handleChange)
+      Nova.$on(this.eventName, debounce(this.handleChange, 250))
 
       this.isListeningToChanges = true
     },
@@ -65,8 +76,8 @@ export default {
       }
     },
 
-    handleChange(value) {
-      this.value = slugify(value, this.field.separator)
+    async handleChange(value) {
+      this.value = await this.fetchPreviewContent(value)
     },
 
     toggleCustomizeClick() {
@@ -96,7 +107,10 @@ export default {
     },
 
     extraAttributes() {
-      return this.field.extraAttributes || {}
+      return {
+        ...this.field.extraAttributes,
+        class: this.errorClasses,
+      }
     },
   },
 }

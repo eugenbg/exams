@@ -15,4 +15,12 @@ interface BatchableAction
      * @return void
      */
     public function withBatch(ActionFields $fields, PendingBatch $batch);
+
+    /**
+     * Set the batch ID on the job.
+     *
+     * @param  string  $batchId
+     * @return $this
+     */
+    public function withBatchId(string $batchId);
 }

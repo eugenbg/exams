@@ -16,6 +16,8 @@ class Attach extends Page
 
     public $viaRelationship;
 
+    public $polymorphic = false;
+
     /**
      * Create a new page instance.
      *
@@ -23,16 +25,46 @@ class Attach extends Page
      * @param  string  $resourceId
      * @param  string  $relation
      * @param  string|null  $viaRelationship
+     * @param  bool  $polymorphic
      * @return void
      */
-    public function __construct($resourceName, $resourceId, $relation, $viaRelationship = null)
+    public function __construct($resourceName, $resourceId, $relation, $viaRelationship = null, $polymorphic = false)
     {
         $this->relation = $relation;
         $this->resourceId = $resourceId;
         $this->resourceName = $resourceName;
         $this->viaRelationship = $viaRelationship;
+        $this->polymorphic = $polymorphic;
 
         $this->setNovaPage("/resources/{$this->resourceName}/{$this->resourceId}/attach/{$this->relation}");
+    }
+
+    /**
+     * Create a new page instance for Belongs-to-Many.
+     *
+     * @param  string  $resourceName
+     * @param  string  $resourceId
+     * @param  string  $relation
+     * @param  string|null  $viaRelationship
+     * @return static
+     */
+    public static function belongsToMany($resourceName, $resourceId, $relation, $viaRelationship = null)
+    {
+        return new static($resourceName, $resourceId, $relation, $viaRelationship);
+    }
+
+    /**
+     * Create a new page instance for Morph-to-Many.
+     *
+     * @param  string  $resourceName
+     * @param  string  $resourceId
+     * @param  string  $relation
+     * @param  string|null  $viaRelationship
+     * @return static
+     */
+    public static function morphToMany($resourceName, $resourceId, $relation, $viaRelationship = null)
+    {
+        return new static($resourceName, $resourceId, $relation, $viaRelationship, true);
     }
 
     /**
@@ -44,7 +76,7 @@ class Attach extends Page
     {
         return $this->novaPageUrl.'?'.http_build_query([
             'viaRelationship' => $this->viaRelationship ?? $this->relation,
-            'polymorphic' => 0,
+            'polymorphic' => $this->polymorphic === true ? 1 : 0,
         ]);
     }
 

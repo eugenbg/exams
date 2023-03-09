@@ -5,6 +5,9 @@ namespace Laravel\Nova\Contracts;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\TrashedStatus;
 
+/**
+ * @method $this tap(callable(\Illuminate\Database\Eloquent\Builder):void $callback)
+ */
 interface QueryBuilder
 {
     /**
@@ -28,8 +31,8 @@ interface QueryBuilder
      * @return $this
      */
     public function search(NovaRequest $request, $query, $search = null,
-                                      array $filters = [], array $orderings = [],
-                                      $withTrashed = TrashedStatus::DEFAULT);
+        array $filters = [], array $orderings = [],
+        $withTrashed = TrashedStatus::DEFAULT);
 
     /**
      * Set the "take" directly to Scout or Eloquent builder.

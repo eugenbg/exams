@@ -35,7 +35,7 @@ class ResourceManager extends Tool implements HasMenu
                 ? $this->groupedMenu($resources, $request)
                 : $this->unGroupedMenu($resources, $request);
 
-            return tap(MenuSection::make(__('Resources'), $resources), function ($section) use ($resources) {
+            return tap(MenuSection::make(Nova::__('Resources'), $resources), function ($section) use ($resources) {
                 if ($resources->count() > 1) {
                     $section->collapsable();
                 }

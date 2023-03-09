@@ -5,7 +5,7 @@ namespace Laravel\Nova\Fields;
 /**
  * @method static static make(mixed $name = 'Avatar', string|null $attribute = 'name')
  */
-class UiAvatar extends Avatar
+class UiAvatar extends Avatar implements Unfillable
 {
     /**
      * UI-Avatars settings.
@@ -30,8 +30,6 @@ class UiAvatar extends Avatar
         parent::__construct($name, $attribute ?? 'name');
 
         $this->exceptOnForms();
-
-        $this->maxWidth(50);
     }
 
     /**

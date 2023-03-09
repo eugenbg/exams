@@ -16,6 +16,7 @@
         :clearable="true"
         trackBy="value"
         class="w-full"
+        mode="modal"
       >
         <!-- The Selected Option Slot -->
         <div v-if="selectedOption" class="flex items-center">
@@ -25,7 +26,7 @@
         <!-- Options List Slot -->
         <template #option="{ option, selected }">
           <div
-            class="flex items-center text-sm font-semibold leading-5 text-90"
+            class="flex items-center text-sm font-semibold leading-5"
             :class="{ 'text-white': selected }"
           >
             {{ option.label }}

@@ -2,7 +2,7 @@
   <PanelItem :index="index" :field="field">
     <template #value>
       <Badge
-        v-if="field.value"
+        v-if="fieldHasValue"
         class="whitespace-nowrap inline-flex items-center"
         :class="field.typeClass"
       >
@@ -19,7 +19,7 @@
             type="check-circle"
           />
         </span>
-        {{ field.value }}
+        {{ fieldValue }}
       </Badge>
 
       <span v-else>&mdash;</span>
@@ -28,7 +28,11 @@
 </template>
 
 <script>
+import { FieldValue } from '@/mixins'
+
 export default {
+  mixins: [FieldValue],
+
   props: ['index', 'resource', 'resourceName', 'resourceId', 'field'],
 }
 </script>

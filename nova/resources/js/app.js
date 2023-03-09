@@ -14,11 +14,8 @@ import { createNovaStore } from './store'
 import resourceStore from './store/resources'
 import FloatingVue from 'floating-vue'
 import find from 'lodash/find'
-import map from 'lodash/map'
-import mapValues from 'lodash/mapValues'
-import flatten from 'lodash/flatten'
-import filter from 'lodash/filter'
 import isNil from 'lodash/isNil'
+import fromPairs from 'lodash/fromPairs'
 import isString from 'lodash/isString'
 import Toasted from 'toastedjs'
 import Emitter from 'tiny-emitter'
@@ -40,8 +37,11 @@ import 'codemirror/keymap/vim'
 import 'codemirror/mode/sql/sql'
 import 'codemirror/mode/twig/twig'
 import 'codemirror/mode/htmlmixed/htmlmixed'
+import { ColorTranslator } from 'colortranslator'
 
 import 'floating-vue/dist/style.css'
+
+const { parseColor } = require('tailwindcss/lib/util/color')
 
 CodeMirror.defineMode('htmltwig', function (config, parserConfig) {
   return CodeMirror.overlayMode(
@@ -60,7 +60,6 @@ const { createApp, h } = window.Vue
 class Nova {
   constructor(config) {
     this.bootingCallbacks = []
-    this.bootedCallbacks = []
     this.appConfig = config
     this.useShortcuts = true
 
@@ -109,7 +108,6 @@ class Nova {
   }
 
   booted(callback) {
-    // this.bootedCallbacks.push(callback)
     callback(this.app, this.store)
   }
 
@@ -138,6 +136,8 @@ class Nova {
 
         this.app.use(plugin)
         this.app.use(FloatingVue, {
+          preventOverflow: true,
+          flip: true,
           themes: {
             Nova: {
               $extend: 'tooltip',
@@ -293,7 +293,9 @@ class Nova {
    * Determine if Nova is missing the requested resource with the given uri key
    */
   missingResource(uriKey) {
-    return find(this.config('resources'), r => r.uriKey == uriKey) == undefined
+    return (
+      find(this.config('resources'), r => r.uriKey === uriKey) === undefined
+    )
   }
 
   /**
@@ -417,16 +419,15 @@ class Nova {
    * Redirect to login path.
    */
   redirectToLogin() {
-    if (!this.config('withAuthentication') && this.config('customLoginPath')) {
-      this.visit({
-        remote: true,
-        url: this.config('customLoginPath'),
-      })
+    const url =
+      !this.config('withAuthentication') && this.config('customLoginPath')
+        ? this.config('customLoginPath')
+        : this.url('/login')
 
-      return
-    }
-
-    this.visit('/login')
+    this.visit({
+      remote: true,
+      url,
+    })
   }
 
   /**
@@ -439,7 +440,7 @@ class Nova {
     }
 
     if (isString(path.url) && path.hasOwnProperty('remote')) {
-      if (path.remote == true) {
+      if (path.remote === true) {
         window.location = path.url
         return
       }
@@ -449,10 +450,50 @@ class Nova {
   }
 
   applyTheme() {
-    if (Object.keys(this.config('brandColors')).length > 0) {
+    const brandColors = this.config('brandColors')
+
+    if (Object.keys(brandColors).length > 0) {
       const style = document.createElement('style')
-      style.innerHTML = this.config('brandColorsCSS')
+
+      // Handle converting any non-RGB user strings into valid RGB strings.
+      // This allows the user to specify any color in HSL, RGB, and RGBA
+      // format, and we'll convert it to the proper format for them.
+      let css = Object.keys(brandColors).reduce((carry, v) => {
+        let colorValue = brandColors[v]
+        let validColor = parseColor(colorValue)
+
+        if (validColor) {
+          let parsedColor = parseColor(
+            ColorTranslator.toRGBA(convertColor(validColor))
+          )
+
+          let rgbaString = `${parsedColor.color.join(' ')} / ${
+            parsedColor.alpha
+          }`
+
+          return carry + `\n  --colors-primary-${v}: ${rgbaString};`
+        }
+
+        return carry + `\n  --colors-primary-${v}: ${colorValue};`
+      }, '')
+
+      style.innerHTML = `:root {${css}\n}`
+
       document.head.append(style)
     }
   }
+}
+
+function convertColor(parsedColor) {
+  let color = fromPairs(
+    Array.from(parsedColor.mode).map((v, i) => {
+      return [v, parsedColor.color[i]]
+    })
+  )
+
+  if (parsedColor.alpha !== undefined) {
+    color.a = parsedColor.alpha
+  }
+
+  return color
 }

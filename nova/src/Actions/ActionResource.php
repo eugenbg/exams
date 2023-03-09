@@ -11,10 +11,12 @@ use Laravel\Nova\Fields\Status;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Fields\Textarea;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Laravel\Nova\Nova;
 use Laravel\Nova\Resource;
 
 /**
  * @template TActionModel of \Laravel\Nova\Actions\ActionEvent
+ *
  * @extends \Laravel\Nova\Resource<TActionModel>
  */
 class ActionResource extends Resource
@@ -100,9 +102,9 @@ class ActionResource extends Resource
     public function fields(NovaRequest $request)
     {
         return [
-            ID::make('ID', 'id')->showOnPreview(),
+            ID::make(Nova::__('ID'), 'id')->showOnPreview(),
             Text::make(__('Action Name'), 'name', function ($value) {
-                return __($value);
+                return Nova::__($value);
             })->showOnPreview(),
 
             Text::make(__('Action Initiated By'), function () {
@@ -113,17 +115,17 @@ class ActionResource extends Resource
 
             Status::make(__('Action Status'), 'status', function ($value) {
                 return __(ucfirst($value));
-            })->loadingWhen([__('Waiting'), __('Running')])->failedWhen([__('Failed')]),
+            })->loadingWhen([Nova::__('Waiting'), Nova::__('Running')])->failedWhen([Nova::__('Failed')]),
 
             $this->when(isset($this->original), function () {
-                return KeyValue::make(__('Original'), 'original')->showOnPreview();
+                return KeyValue::make(Nova::__('Original'), 'original')->showOnPreview();
             }),
 
             $this->when(isset($this->changes), function () {
-                return KeyValue::make(__('Changes'), 'changes')->showOnPreview();
+                return KeyValue::make(Nova::__('Changes'), 'changes')->showOnPreview();
             }),
 
-            Textarea::make(__('Exception'), 'exception')->showOnPreview(),
+            Textarea::make(Nova::__('Exception'), 'exception')->showOnPreview(),
 
             DateTime::make(__('Action Happened At'), 'created_at')->exceptOnForms()->showOnPreview(),
         ];
@@ -169,7 +171,7 @@ class ActionResource extends Resource
      */
     public static function label()
     {
-        return __('Actions');
+        return Nova::__('Actions');
     }
 
     /**
@@ -179,7 +181,7 @@ class ActionResource extends Resource
      */
     public static function singularLabel()
     {
-        return __('Action');
+        return Nova::__('Action');
     }
 
     /**

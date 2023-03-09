@@ -1,3 +1,4 @@
+import debounce from 'lodash/debounce'
 import find from 'lodash/find'
 import includes from 'lodash/includes'
 import map from 'lodash/map'
@@ -30,8 +31,24 @@ export default {
 
   provide() {
     return {
+      authorizedToViewAnyResources: computed(
+        () => this.authorizedToViewAnyResources
+      ),
+      authorizedToUpdateAnyResources: computed(
+        () => this.authorizedToUpdateAnyResources
+      ),
+      authorizedToDeleteAnyResources: computed(
+        () => this.authorizedToDeleteAnyResources
+      ),
+      authorizedToRestoreAnyResources: computed(
+        () => this.authorizedToRestoreAnyResources
+      ),
+      selectedResourcesCount: computed(() => this.selectedResources.length),
       selectAllChecked: computed(() => this.selectAllChecked),
       selectAllMatchingChecked: computed(() => this.selectAllMatchingChecked),
+      selectAllOrSelectAllMatchingChecked: computed(
+        () => this.selectAllOrSelectAllMatchingChecked
+      ),
       selectAllAndSelectAllMatchingChecked: computed(
         () => this.selectAllAndSelectAllMatchingChecked
       ),
@@ -57,10 +74,16 @@ export default {
     selectedResources: [],
     softDeletes: false,
     trashed: '',
+    search: '',
   }),
 
   async created() {
     if (Nova.missingResource(this.resourceName)) return Nova.visit('/404')
+
+    const debouncer = debounce(
+      callback => callback(),
+      this.resourceInformation.debounce
+    )
 
     this.initializeSearchFromQueryString()
     this.initializePerPageFromQueryString()
@@ -102,6 +125,11 @@ export default {
         this.getResources()
       }
     )
+
+    this.$watch('search', newValue => {
+      this.search = newValue
+      debouncer(() => this.performSearch())
+    })
   },
 
   beforeUnmount() {
@@ -148,7 +176,9 @@ export default {
     /**
      * Toggle the selection of all resources
      */
-    toggleSelectAll() {
+    toggleSelectAll(e) {
+      e.preventDefault()
+
       if (this.selectAllChecked) {
         this.clearResourceSelections()
       } else {
@@ -161,7 +191,9 @@ export default {
     /**
      * Toggle the selection of all matching resources in the database
      */
-    toggleSelectAllMatching() {
+    toggleSelectAllMatching(e) {
+      e.preventDefault()
+
       if (!this.selectAllMatchingResources) {
         this.selectAllResources()
         this.selectAllMatchingResources = true
@@ -289,11 +321,9 @@ export default {
      * Execute a search against the resource.
      */
     performSearch() {
-      this.debouncer(() => {
-        this.updateQueryString({
-          [this.pageParameter]: 1,
-          [this.searchParameter]: this.search,
-        })
+      this.updateQueryString({
+        [this.pageParameter]: 1,
+        [this.searchParameter]: this.search,
       })
     },
   },
@@ -332,25 +362,12 @@ export default {
       )
     },
 
-    /**
-     * Determine if Select All and Select All Matching is checked.
-     */
     selectAllAndSelectAllMatchingChecked() {
-      return (
-        this.selectAllChecked &&
-        (this.selectAllMatchingChecked ||
-          this.selectedResourcesMatchesTotalResourceCount)
-      )
+      return this.selectAllChecked && this.selectAllMatchingChecked
     },
 
-    /**
-     * Determine current selected resources is equals to total resource count.
-     */
-    selectedResourcesMatchesTotalResourceCount() {
-      return Boolean(
-        this.allMatchingResourceCount > 0 &&
-          this.selectedResources.length === this.allMatchingResourceCount
-      )
+    selectAllOrSelectAllMatchingChecked() {
+      return this.selectAllChecked || this.selectAllMatchingChecked
     },
 
     /**
@@ -514,6 +531,26 @@ export default {
           this.selectedResources,
           resource => resource.authorizedToForceDelete
         )
+      )
+    },
+
+    /**
+     * Determine if the user is authorized to view any listed resource.
+     */
+    authorizedToViewAnyResources() {
+      return (
+        this.resources.length > 0 &&
+        Boolean(find(this.resources, resource => resource.authorizedToView))
+      )
+    },
+
+    /**
+     * Determine if the user is authorized to view any listed resource.
+     */
+    authorizedToUpdateAnyResources() {
+      return (
+        this.resources.length > 0 &&
+        Boolean(find(this.resources, resource => resource.authorizedToUpdate))
       )
     },
 
@@ -691,7 +728,7 @@ export default {
       return (
         this.disablePagination !== true &&
         this.resourceResponse &&
-        this.hasResources
+        (this.hasResources || this.hasPreviousPage)
       )
     },
 

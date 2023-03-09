@@ -7,14 +7,12 @@
 </template>
 
 <script>
-import md from 'markdown-it'
-
 export default {
   props: ['index', 'resource', 'resourceName', 'resourceId', 'field'],
 
   computed: {
     excerpt() {
-      return md(this.field.preset).render(this.field.value || '')
+      return this.field.previewFor
     },
   },
 }

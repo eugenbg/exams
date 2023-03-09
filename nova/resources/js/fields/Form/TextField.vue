@@ -3,49 +3,61 @@
     :field="currentField"
     :errors="errors"
     :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
   >
     <template #field>
-      <input
-        v-bind="extraAttributes"
-        class="w-full form-control form-input form-input-bordered"
-        @input="handleChange"
-        :value="value"
-        :id="currentField.uniqueKey"
-        :dusk="field.attribute"
-        :disabled="currentlyIsReadonly"
-        :list="`${field.attribute}-list`"
-      />
-
-      <datalist
-        v-if="currentField.suggestions && currentField.suggestions.length > 0"
-        :id="`${field.attribute}-list`"
-      >
-        <option
-          :key="suggestion"
-          v-for="suggestion in currentField.suggestions"
-          :value="suggestion"
+      <div class="space-y-1">
+        <input
+          v-bind="extraAttributes"
+          class="w-full form-control form-input form-input-bordered"
+          @input="handleChange"
+          :value="value"
+          :id="currentField.uniqueKey"
+          :dusk="field.attribute"
+          :disabled="currentlyIsReadonly"
+          :maxlength="field.enforceMaxlength ? field.maxlength : -1"
         />
-      </datalist>
+
+        <datalist v-if="suggestions.length > 0" :id="suggestionsId">
+          <option
+            :key="suggestion"
+            v-for="suggestion in suggestions"
+            :value="suggestion"
+          />
+        </datalist>
+
+        <CharacterCounter
+          v-if="field.maxlength"
+          :count="value.length"
+          :limit="field.maxlength"
+        />
+      </div>
     </template>
   </DefaultField>
 </template>
 
 <script>
-import { DependentFormField, HandlesValidationErrors } from '@/mixins'
+import {
+  DependentFormField,
+  FieldSuggestions,
+  HandlesValidationErrors,
+} from '@/mixins'
 
 export default {
-  mixins: [HandlesValidationErrors, DependentFormField],
+  mixins: [DependentFormField, FieldSuggestions, HandlesValidationErrors],
 
   computed: {
     defaultAttributes() {
       return {
         type: this.currentField.type || 'text',
+        placeholder: this.currentField.placeholder || this.field.name,
+        class: this.errorClasses,
         min: this.currentField.min,
         max: this.currentField.max,
         step: this.currentField.step,
         pattern: this.currentField.pattern,
-        placeholder: this.currentField.placeholder || this.field.name,
-        class: this.errorClasses,
+
+        ...this.suggestionsAttributes,
       }
     },
 

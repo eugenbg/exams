@@ -20,7 +20,7 @@ export default {
     as: {
       type: String,
       default: 'external',
-      validator: v => ['button', 'external', 'link'].includes(v),
+      validator: v => ['button', 'external', 'form-button', 'link'].includes(v),
     },
 
     destructive: {
@@ -35,6 +35,7 @@ export default {
         button: 'button',
         external: 'a',
         link: 'Link',
+        'form-button': 'FormButton',
       }[this.as]
     },
   },

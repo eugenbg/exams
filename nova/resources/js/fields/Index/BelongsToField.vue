@@ -2,7 +2,25 @@
   <div :class="`text-${field.textAlign}`">
     <span>
       <span v-if="field.viewable && field.value">
+        <RelationPeek
+          v-if="field.peekable && field.hasFieldsToPeekAt"
+          :resource-name="field.resourceName"
+          :resource-id="field.belongsToId"
+          :resource="resource"
+        >
+          <Link
+            @click.stop
+            :href="
+              $url(`/resources/${field.resourceName}/${field.belongsToId}`)
+            "
+            class="link-default"
+          >
+            {{ field.value }}
+          </Link>
+        </RelationPeek>
+
         <Link
+          v-else
           @click.stop
           :href="$url(`/resources/${field.resourceName}/${field.belongsToId}`)"
           class="link-default"
@@ -16,8 +34,10 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: ['resourceName', 'field'],
-}
+<script setup>
+const props = defineProps({
+  resource: { type: Object },
+  resourceName: { type: String },
+  field: { type: Object },
+})
 </script>

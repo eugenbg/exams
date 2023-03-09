@@ -27,9 +27,9 @@ class ResourceSearchRequest extends NovaRequest
         $this->first === 'true'
                         ? $query->whereKey($model->newQueryWithoutScopes(), $this->current)
                         : $query->search(
-                                $this, $this->newQuery(), $this->search,
-                                $this->filters()->all(), $this->orderings(), $this->trashed()
-                          );
+                            $this, $this->newQuery(), $this->search,
+                            $this->filters()->all(), $this->orderings(), $this->trashed()
+                        );
 
         return $query->take($limit)->get();
     }

@@ -2,7 +2,7 @@
   <DefaultField
     :field="currentField"
     :errors="errors"
-    :full-width-content="true"
+    :full-width-content="['modal', 'action-modal'].includes(mode)"
     :show-help-text="showHelpText"
   >
     <template #field>
@@ -86,18 +86,25 @@ export default {
   data: () => ({ theData: [] }),
 
   mounted() {
-    this.theData = map(Object.entries(this.value || {}), ([key, value]) => ({
-      id: guid(),
-      key: `${key}`,
-      value,
-    }))
-
-    if (this.theData.length == 0) {
-      this.addRow()
-    }
+    this.populateKeyValueData()
   },
 
   methods: {
+    /*
+     * Set the initial value for the field
+     */
+    populateKeyValueData() {
+      this.theData = map(Object.entries(this.value || {}), ([key, value]) => ({
+        id: guid(),
+        key: `${key}`,
+        value,
+      }))
+
+      if (this.theData.length == 0) {
+        this.addRow()
+      }
+    },
+
     /**
      * Provide a function that fills a passed FormData object with the
      * field's internal value attribute.
@@ -144,6 +151,10 @@ export default {
       return this.$nextTick(() => {
         this.$refs[refId][0].handleKeyFieldFocus()
       })
+    },
+
+    onSyncedField() {
+      this.populateKeyValueData()
     },
   },
 

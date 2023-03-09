@@ -66,6 +66,25 @@
             />
 
             <Link
+              v-if="showViewLink"
+              v-tooltip="{
+                placement: 'bottom',
+                distance: 10,
+                skidding: 0,
+                content: __('View'),
+              }"
+              :href="$url(`/resources/${resourceName}/${resourceId}`)"
+              class="rounded hover:bg-gray-200 dark:hover:bg-gray-800 focus:outline-none focus:ring"
+              data-testid="view-resource"
+              dusk="view-resource-button"
+              tabindex="1"
+            >
+              <BasicButton component="span">
+                <Icon type="eye" />
+              </BasicButton>
+            </Link>
+
+            <Link
               v-if="resource.authorizedToUpdate"
               v-tooltip="{
                 placement: 'bottom',
@@ -104,6 +123,11 @@ import { mapActions } from 'vuex'
 export default {
   props: {
     shouldOverrideMeta: {
+      type: Boolean,
+      default: false,
+    },
+
+    showViewLink: {
       type: Boolean,
       default: false,
     },

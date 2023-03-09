@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Nova\Contracts\ImpersonatesUsers;
+use Laravel\Nova\Events\StartedImpersonating;
+use Laravel\Nova\Events\StoppedImpersonating;
 use Laravel\Nova\Nova;
 
 class SessionImpersonator implements ImpersonatesUsers
@@ -23,8 +25,13 @@ class SessionImpersonator implements ImpersonatesUsers
     public function impersonate(Request $request, StatefulGuard $guard, Authenticatable $user)
     {
         return rescue(function () use ($request, $guard, $user) {
+            $impersonator = Nova::user($request);
+
             $request->session()->put(
-                'nova_impersonated_by', Nova::user($request)->getAuthIdentifier()
+                'nova_impersonated_by', $impersonator->getAuthIdentifier()
+            );
+            $request->session()->put(
+                'nova_impersonated_remember', $guard->viaRemember()
             );
 
             $novaGuard = config('nova.guard') ?? config('auth.defaults.guard');
@@ -45,6 +52,8 @@ class SessionImpersonator implements ImpersonatesUsers
 
             $guard->login($user);
 
+            event(new StartedImpersonating($impersonator, $user));
+
             return true;
         }, false);
     }
@@ -60,13 +69,20 @@ class SessionImpersonator implements ImpersonatesUsers
     public function stopImpersonating(Request $request, StatefulGuard $guard, string $userModel)
     {
         return rescue(function () use ($request, $guard, $userModel) {
+            if (! $this->impersonating($request)) {
+                return false;
+            }
+
+            $user = $request->user($userGuard = $request->session()->get('nova_impersonated_guard'));
             $impersonator = $userModel::findOrFail($request->session()->get('nova_impersonated_by', null));
 
             if ($request->session()->has('nova_impersonated_guard')) {
-                Auth::guard($request->session()->get('nova_impersonated_guard'))->logout();
+                Auth::guard($userGuard)->logout();
             }
 
-            $guard->login($impersonator);
+            $guard->login($impersonator, $request->session()->get('nova_impersonated_remember') ?? false);
+
+            event(new StoppedImpersonating($impersonator, $user));
 
             $this->flushImpersonationData($request);
 
@@ -96,6 +112,33 @@ class SessionImpersonator implements ImpersonatesUsers
         if ($request->hasSession()) {
             $request->session()->forget('nova_impersonated_by');
             $request->session()->forget('nova_impersonated_guard');
+            $request->session()->forget('nova_impersonated_remember');
         }
+    }
+
+    /**
+     * Redirect an admin after starting impersonation.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function redirectAfterStartingImpersonation(Request $request)
+    {
+        return response()->json([
+            'redirect' => config('nova.impersonation.started', '/'),
+        ]);
+    }
+
+    /**
+     * Redirect an admin after finishing impersonation.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function redirectAfterStoppingImpersonation(Request $request)
+    {
+        return response()->json([
+            'redirect' => config('nova.impersonation.stopped', Nova::url('/')),
+        ]);
     }
 }

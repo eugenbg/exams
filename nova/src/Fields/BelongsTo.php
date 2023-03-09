@@ -26,6 +26,7 @@ class BelongsTo extends Field implements FilterableField, RelatableField
         DeterminesIfCreateRelationCanBeShown,
         EloquentFilterable,
         FormatsRelatableDisplayValues,
+        Peekable,
         ResolvesReverseRelation,
         Searchable,
         SupportsDependentFields;
@@ -50,6 +51,13 @@ class BelongsTo extends Field implements FilterableField, RelatableField
      * @var string
      */
     public $resourceName;
+
+    /**
+     * The resolved BelongsTo Resource.
+     *
+     * @var \Laravel\Nova\Resource|null
+     */
+    public $belongsToResource;
 
     /**
      * The name of the Eloquent "belongs to" relationship.
@@ -143,7 +151,7 @@ class BelongsTo extends Field implements FilterableField, RelatableField
     /**
      * Determine if the field should be displayed for the given request.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request&\Laravel\Nova\Http\Requests\NovaRequest  $request
      * @return bool
      */
     public function authorize(Request $request)
@@ -184,13 +192,13 @@ class BelongsTo extends Field implements FilterableField, RelatableField
         }
 
         if ($value) {
-            $resource = new $this->resourceClass($value);
+            $this->belongsToResource = new $this->resourceClass($value);
 
             $this->belongsToId = Util::safeInt($value->getKey());
 
-            $this->value = $this->formatDisplayValue($resource);
+            $this->value = $this->formatDisplayValue($this->belongsToResource);
 
-            $this->viewable = ($this->viewable ?? true) && $resource->authorizedToView(app(NovaRequest::class));
+            $this->viewable = ($this->viewable ?? true) && $this->belongsToResource->authorizedToView(app(NovaRequest::class));
         }
     }
 
@@ -262,6 +270,22 @@ class BelongsTo extends Field implements FilterableField, RelatableField
      * Hydrate the given attribute on the model based on the incoming request.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @param  object  $model
+     * @return mixed
+     */
+    public function fillForAction(NovaRequest $request, $model)
+    {
+        if ($request->exists($this->attribute)) {
+            $value = $request[$this->attribute];
+
+            $model->{$this->attribute} = $this->resourceClass::newModel()->query()->find($value);
+        }
+    }
+
+    /**
+     * Hydrate the given attribute on the model based on the incoming request.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
      * @param  string  $requestAttribute
      * @param  object  $model
      * @param  string  $attribute
@@ -276,7 +300,7 @@ class BelongsTo extends Field implements FilterableField, RelatableField
                 return $model->{$this->attribute}();
             });
 
-            if ($this->isNullValue($value)) {
+            if ($this->isValidNullValue($value)) {
                 $relation->dissociate();
             } else {
                 $relation->associate($relation->getQuery()->withoutGlobalScopes()->find($value));
@@ -302,11 +326,17 @@ class BelongsTo extends Field implements FilterableField, RelatableField
         $request->first === 'true'
                         ? $query->whereKey($model->newQueryWithoutScopes(), $request->current)
                         : $query->search(
-                                $request, $model->newQuery(), $request->search,
-                                [], [], TrashedStatus::fromBoolean($withTrashed)
-                          );
+                            $request, $model->newQuery(), $request->search,
+                            [], [], TrashedStatus::fromBoolean($withTrashed)
+                        );
 
         return $query->tap(function ($query) use ($request, $model) {
+            if (is_callable($this->relatableQueryCallback)) {
+                call_user_func($this->relatableQueryCallback, $request, $query);
+
+                return;
+            }
+
             forward_static_call($this->associatableQueryCallable($request, $model), $request, $query, $this);
         });
     }
@@ -512,6 +542,8 @@ class BelongsTo extends Field implements FilterableField, RelatableField
                 'debounce' => $this->debounce,
                 'displaysWithTrashed' => $this->displaysWithTrashed,
                 'label' => $this->resourceClass::label(),
+                'peekable' => $this->isPeekable($request),
+                'hasFieldsToPeekAt' => $this->hasFieldsToPeekAt($request),
                 'resourceName' => $this->resourceName,
                 'reverse' => $this->isReverseRelation($request),
                 'searchable' => $this->isSearchable($request),

@@ -30,6 +30,8 @@ class AttachableController extends Controller
 
         $parentResource = $request->findResourceOrFail();
 
+        $shouldReorderAttachableValues = $field->shouldReorderAttachableValues($request) && ! $associatedResource::usesScout();
+
         return [
             'resources' => $field->buildAttachableQuery($request, $withTrashed)
                         ->tap($this->getAttachableQueryResolver($request, $field))
@@ -40,7 +42,9 @@ class AttachableController extends Controller
                         })
                         ->map(function ($resource) use ($request, $field) {
                             return $field->formatAttachableResource($request, $resource);
-                        })->sortBy('display', SORT_NATURAL | SORT_FLAG_CASE)->values(),
+                        })->when($shouldReorderAttachableValues, function ($collection) {
+                            return $collection->sortBy('display', SORT_NATURAL | SORT_FLAG_CASE);
+                        })->values(),
             'withTrashed' => $withTrashed,
             'softDeletes' => $associatedResource::softDeletes(),
         ];

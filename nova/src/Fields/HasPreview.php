@@ -7,7 +7,7 @@ trait HasPreview
     /**
      * The callback used to retrieve the preview URL.
      *
-     * @var (callable(mixed, ?string, mixed):?string)|null
+     * @var (callable(mixed, ?string, mixed):(?string))|null
      */
     public $previewUrlCallback;
 

@@ -21,8 +21,8 @@ trait PerformsQueries
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public static function buildIndexQuery(NovaRequest $request, $query, $search = null,
-                                      array $filters = [], array $orderings = [],
-                                      $withTrashed = TrashedStatus::DEFAULT)
+        array $filters = [], array $orderings = [],
+        $withTrashed = TrashedStatus::DEFAULT)
     {
         return static::applyOrderings(static::applyFilters(
             $request, static::initializeQuery($request, $query, (string) $search, $withTrashed), $filters
@@ -117,7 +117,7 @@ trait PerformsQueries
      * @return \Laravel\Scout\Builder
      */
     public static function buildIndexQueryUsingScout(NovaRequest $request, $search = null,
-                                          $withTrashed = TrashedStatus::DEFAULT)
+        $withTrashed = TrashedStatus::DEFAULT)
     {
         return tap(static::applySoftDeleteConstraint(
             static::newModel()->search($search), $withTrashed

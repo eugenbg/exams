@@ -3,12 +3,16 @@
 namespace Laravel\Nova\Fields;
 
 use Laravel\Nova\Contracts\FilterableField;
+use Laravel\Nova\Exceptions\NovaException;
 use Laravel\Nova\Fields\Filters\TextFilter;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
 class Textarea extends Field implements FilterableField
 {
-    use Expandable, FieldFilterable, SupportsDependentFields;
+    use Expandable;
+    use FieldFilterable;
+    use SupportsDependentFields;
+    use SupportsMaxlength;
 
     /**
      * The field's component.
@@ -67,6 +71,19 @@ class Textarea extends Field implements FilterableField
     protected function makeFilter(NovaRequest $request)
     {
         return new TextFilter($this);
+    }
+
+    /**
+     * Specify that the element should be visible on the index view.
+     *
+     * @param  (callable():(bool))|bool  $callback
+     * @return $this
+     *
+     * @throws \Laravel\Nova\Exceptions\NovaException
+     */
+    public function showOnIndex($callback = true)
+    {
+        throw NovaException::helperNotSupported(__FUNCTION__, static::class);
     }
 
     /**

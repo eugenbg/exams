@@ -3,7 +3,12 @@
     <template v-if="show">
       <div
         v-bind="defaultAttributes"
-        class="modal fixed inset-0 z-[60] overflow-x-hidden overflow-y-auto px-3 md:px-0 py-3 md:py-6"
+        class="modal fixed inset-0 z-[60]"
+        :class="{
+          'px-3 md:px-0 py-3 md:py-6 overflow-x-hidden overflow-y-auto':
+            modalStyle === 'window',
+          'h-full': modalStyle === 'fullscreen',
+        }"
         :tabindex="tabIndex"
         :role="role"
         :data-modal-open="show"
@@ -43,10 +48,27 @@ export default {
       default: false,
     },
 
-    maxWidth: {
-      type: [String, Boolean],
+    size: {
+      type: String,
       default: 'xl',
-      required: false,
+      validator: v =>
+        [
+          'sm',
+          'md',
+          'lg',
+          'xl',
+          '2xl',
+          '3xl',
+          '4xl',
+          '5xl',
+          '6xl',
+          '7xl',
+        ].includes(v),
+    },
+
+    modalStyle: {
+      type: String,
+      default: 'window',
     },
 
     role: {
@@ -82,7 +104,7 @@ export default {
 
     handleVisibilityChange(showing) {
       this.$nextTick(() => {
-        if (showing == true) {
+        if (showing === true) {
           this.$emit('showing')
           document.body.classList.add('overflow-hidden')
           Nova.pauseShortcuts()
@@ -115,22 +137,27 @@ export default {
       return omit(this.$attrs, ['class'])
     },
 
-    contentClasses() {
-      let maxWidth = this.maxWidth
-
-      if (maxWidth == false) {
-        maxWidth = null
+    sizeClasses() {
+      return {
+        sm: 'max-w-sm',
+        md: 'max-w-md',
+        lg: 'max-w-lg',
+        xl: 'max-w-xl',
+        '2xl': 'max-w-2xl',
+        '3xl': 'max-w-3xl',
+        '4xl': 'max-w-4xl',
+        '5xl': 'max-w-5xl',
+        '6xl': 'max-w-6xl',
+        '7xl': 'max-w-7xl',
       }
+    },
+
+    contentClasses() {
+      let windowedClasses = this.modalStyle === 'window' ? this.sizeClasses : {}
 
       return filter([
-        {
-          sm: 'max-w-sm',
-          md: 'max-w-md',
-          lg: 'max-w-lg',
-          xl: 'max-w-xl',
-          '2xl': 'max-w-2xl',
-          'screen-md': 'max-w-screen-md',
-        }[maxWidth] ?? null,
+        windowedClasses[this.size] ?? null,
+        this.modalStyle === 'fullscreen' ? 'h-full' : '',
         this.$attrs.class,
       ])
     },

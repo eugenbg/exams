@@ -10,7 +10,7 @@
     @trix-attachment-remove="handleRemoveFile"
     @trix-file-accept="handleFileAccept"
     :placeholder="placeholder"
-    class="trix-content"
+    class="trix-content prose !max-w-full prose-sm dark:prose-invert"
   />
   <input type="hidden" :name="name" :id="uid" :value="value" />
 </template>

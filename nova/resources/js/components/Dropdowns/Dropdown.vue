@@ -14,7 +14,8 @@
       <div
         v-show="show"
         ref="menu"
-        class="relative z-40"
+        class="relative"
+        :class="extraClasses"
         :data-menu-open="show"
         @click="handleClick"
       >
@@ -65,6 +66,10 @@ export default {
       type: Boolean,
       default: true,
     },
+
+    triggerOverrideFunction: {
+      type: Function,
+    },
   },
 
   data: () => ({
@@ -100,6 +105,11 @@ export default {
      * Show the dropdown menu.
      */
     showMenu() {
+      if (this.triggerOverrideFunction) {
+        this.triggerOverrideFunction()
+        return
+      }
+
       if (this.debouncedHideMenu) {
         this.debouncedHideMenu.cancel()
         this.debouncedHideMenu = null
@@ -140,6 +150,10 @@ export default {
   },
 
   computed: {
+    extraClasses() {
+      return ['z-40']
+    },
+
     resolvedPlacement() {
       if (!Nova.config('rtlEnabled')) {
         return this.placement

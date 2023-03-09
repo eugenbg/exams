@@ -1,18 +1,44 @@
 <template>
-  <LoadingView :loading="loading" :dusk="'dashboard-' + this.name">
+  <LoadingView
+    :loading="loading"
+    :dusk="'dashboard-' + this.name"
+    class="space-y-3"
+  >
     <Head :title="label" />
 
-    <Heading v-if="label && cards.length > 1" class="mb-3">{{
-      __(label)
-    }}</Heading>
+    <div
+      v-if="(label && !isHelpCard) || showRefreshButton"
+      class="flex items-center"
+    >
+      <Heading v-if="label && !isHelpCard">
+        {{ __(label) }}
+      </Heading>
+
+      <button
+        @click.stop="refreshDashboard"
+        type="button"
+        class="ml-1 hover:opacity-50 active:ring"
+        v-if="showRefreshButton"
+        tabindex="0"
+      >
+        <Icon
+          class="text-gray-500 dark:text-gray-400"
+          :solid="true"
+          type="refresh"
+          width="14"
+          v-tooltip="__('Refresh')"
+        />
+      </button>
+    </div>
 
     <div v-if="shouldShowCards">
       <Cards v-if="cards.length > 0" :cards="cards" />
     </div>
   </LoadingView>
 </template>
-
 <script>
+import { minimum } from '@/util'
+
 export default {
   props: {
     name: {
@@ -26,6 +52,8 @@ export default {
     loading: true,
     label: '',
     cards: [],
+    showRefreshButton: false,
+    isHelpCard: false,
   }),
 
   created() {
@@ -34,16 +62,23 @@ export default {
 
   methods: {
     async fetchDashboard() {
+      this.loading = true
+
       try {
         const {
-          data: { label, cards },
-        } = await Nova.request().get(this.dashboardEndpoint, {
-          params: this.extraCardParams,
-        })
+          data: { label, cards, showRefreshButton, isHelpCard },
+        } = await minimum(
+          Nova.request().get(this.dashboardEndpoint, {
+            params: this.extraCardParams,
+          }),
+          200
+        )
 
         this.loading = false
         this.label = label
         this.cards = cards
+        this.showRefreshButton = showRefreshButton
+        this.isHelpCard = isHelpCard
       } catch (error) {
         if (error.response.status == 401) {
           return Nova.redirectToLogin()
@@ -51,6 +86,10 @@ export default {
 
         Nova.visit('/404')
       }
+    },
+
+    refreshDashboard() {
+      Nova.$emit('metric-refresh')
     },
   },
 

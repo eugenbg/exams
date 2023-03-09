@@ -94,7 +94,7 @@
           <div
             class="bg-white dark:bg-gray-800 absolute left-0 bottom-0 right-0 py-1 px-2 md:hidden border-t border-gray-100 dark:border-gray-700"
           >
-            <UserMenu />
+            <UserMenu :mobile="true" />
           </div>
 
           <div class="flex-shrink-0 w-14" aria-hidden="true">

@@ -11,6 +11,8 @@ use Laravel\Nova\Panel;
  */
 class HasManyThrough extends HasMany implements ListableField, RelatableField
 {
+    use Collapsable;
+
     /**
      * The field's component.
      *
@@ -67,9 +69,8 @@ class HasManyThrough extends HasMany implements ListableField, RelatableField
      */
     public function asPanel()
     {
-        return Panel::make($this->name)
+        return Panel::make($this->name, [$this])
                     ->withMeta([
-                        'fields' => [$this],
                         'prefixComponent' => true,
                     ])->withComponent('relationship-panel');
     }
@@ -82,9 +83,11 @@ class HasManyThrough extends HasMany implements ListableField, RelatableField
     public function jsonSerialize(): array
     {
         return array_merge([
+            'collapsable' => $this->collapsable,
+            'collapsedByDefault' => $this->collapsedByDefault,
             'hasManyThroughRelationship' => $this->hasManyThroughRelationship,
             'relatable' => true,
-            'perPage'=> $this->resourceClass::$perPageViaRelationship,
+            'perPage' => $this->resourceClass::$perPageViaRelationship,
             'resourceName' => $this->resourceName,
             'singularLabel' => $this->singularLabel ?? $this->resourceClass::singularLabel(),
         ], parent::jsonSerialize());

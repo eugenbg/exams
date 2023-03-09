@@ -46,7 +46,7 @@
         <DefaultField
           :field="field"
           :errors="validationErrors"
-          :show-help-text="field.helpText != null"
+          :show-help-text="true"
         >
           <template #field>
             <div class="flex items-center">
@@ -84,7 +84,7 @@
 
                     <div class="flex-auto">
                       <div
-                        class="text-sm font-semibold leading-5 text-90"
+                        class="text-sm font-semibold leading-5"
                         :class="{ 'text-white': selected }"
                       >
                         {{ option.display }}
@@ -174,7 +174,7 @@
               :via-resource="viaResource"
               :via-resource-id="viaResourceId"
               :via-relationship="viaRelationship"
-              :show-help-text="field.helpText != null"
+              :show-help-text="true"
             />
           </div>
         </LoadingView>
@@ -192,6 +192,7 @@
 
         <LoadingButton
           dusk="attach-and-attach-another-button"
+          type="button"
           @click.native.prevent="attachAndAttachAnother"
           :disabled="isWorking"
           :processing="submittedViaAttachAndAttachAnother"

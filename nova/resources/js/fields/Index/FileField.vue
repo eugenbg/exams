@@ -1,61 +1,57 @@
 <template>
-  <div class="flex items-center w-8 h-8 mx-auto">
-    <Loader v-if="loading && !missing" class="text-gray-300" width="30" />
-    <Icon
-      v-if="!loading && missing == true"
-      type="exclamation-circle"
-      class="text-red-500"
-      v-tooltip="__('The image could not be loaded.')"
+  <div :class="alignmentClass" class="flex">
+    <ImageLoader
+      v-if="shouldShowLoader"
+      :src="imageUrl"
+      :max-width="field.maxWidth || field.indexWidth"
+      :rounded="field.rounded"
+      :aspect="field.aspect"
     />
-    <div
-      ref="image"
-      class="overflow-hidden"
-      :class="{ 'rounded-full': field.rounded, rounded: !field.rounded }"
-    />
+
+    <span
+      v-if="usesCustomizedDisplay && !imageUrl"
+      class="break-words"
+      v-tooltip="field.value"
+    >
+      {{ field.displayedAs }}
+    </span>
+    <p
+      v-if="!usesCustomizedDisplay && !imageUrl"
+      :class="`text-${field.textAlign}`"
+      v-tooltip="field.value"
+    >
+      &mdash;
+    </p>
   </div>
 </template>
 
 <script>
-import { minimum } from '@/util'
+import { FieldValue } from '@/mixins'
+import { computed } from 'vue'
 
 export default {
+  mixins: [FieldValue],
   props: ['viaResource', 'viaResourceId', 'resourceName', 'field'],
 
   data: () => ({
-    loading: true,
-    missing: false,
+    loading: false,
   }),
 
-  mounted() {
-    minimum(
-      new Promise((resolve, reject) => {
-        let image = new Image()
-        image.addEventListener('load', () => resolve(image))
-        image.addEventListener('error', () => reject())
-        image.src = this.imageUrl
-        image.className = 'object-cover h-8 w-8'
-      })
-    )
-      .then(image => {
-        image.draggable = false
-        this.$refs.image.appendChild(image)
-      })
-      .catch(err => {
-        console.log(err)
-        this.missing = true
-      })
-      .finally(() => {
-        this.loading = false
-      })
-  },
-
   computed: {
-    imageUrl() {
-      if (this.field.previewUrl && !this.field.thumbnailUrl) {
-        return this.field.previewUrl
-      }
+    shouldShowLoader() {
+      return this.imageUrl
+    },
 
-      return this.field.thumbnailUrl
+    imageUrl() {
+      return this.field?.thumbnailUrl || this.field?.previewUrl
+    },
+
+    alignmentClass() {
+      return {
+        left: 'items-center justify-start',
+        center: 'items-center justify-center',
+        right: 'items-center justify-end',
+      }[this.field.textAlign]
     },
   },
 }

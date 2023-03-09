@@ -6,7 +6,7 @@
       @submit.prevent="attempt"
       class="bg-white dark:bg-gray-800 shadow rounded-lg p-8 w-[25rem] mx-auto"
     >
-      <h2 class="text-2xl text-center font-normal mb-6 text-90">
+      <h2 class="text-2xl text-center font-normal mb-6">
         {{ __('Reset Password') }}
       </h2>
 
@@ -71,9 +71,14 @@
         </HelpText>
       </div>
 
-      <DefaultButton class="w-full flex justify-center" type="submit">
+      <LoadingButton
+        class="w-full flex justify-center"
+        type="submit"
+        :disabled="form.processing"
+        :loading="form.processing"
+      >
         {{ __('Reset Password') }}
-      </DefaultButton>
+      </LoadingButton>
     </form>
   </div>
 </template>
@@ -85,12 +90,12 @@ import Auth from '@/layouts/Auth'
 export default {
   layout: Auth,
 
-  props: ['token'],
+  props: ['email', 'token'],
 
   data() {
     return {
       form: Nova.form({
-        email: '',
+        email: this.email,
         password: '',
         password_confirmation: '',
         token: this.token,

@@ -21,6 +21,13 @@ abstract class Dashboard extends Element implements HasMenu
     public $name;
 
     /**
+     * Determines whether Nova should show a refresh button.
+     *
+     * @var bool
+     */
+    public $showRefreshButton = false;
+
+    /**
      * Get the key value for the dashboard.
      *
      * @return string
@@ -76,5 +83,17 @@ abstract class Dashboard extends Element implements HasMenu
     public function menu(Request $request)
     {
         return MenuItem::dashboard(static::class);
+    }
+
+    /**
+     * Show a refresh button for the dashboard.
+     *
+     * @return $this
+     */
+    public function showRefreshButton()
+    {
+        $this->showRefreshButton = true;
+
+        return $this;
     }
 }

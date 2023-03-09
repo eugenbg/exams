@@ -2,8 +2,13 @@
 
 namespace Laravel\Nova\Http\Resources;
 
+use Laravel\Nova\Contracts\ListableField;
 use Laravel\Nova\Contracts\RelatableField;
+use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\FieldCollection;
+use Laravel\Nova\Fields\HasOne;
+use Laravel\Nova\Fields\MorphOne;
+use Laravel\Nova\Fields\MorphTo;
 use Laravel\Nova\Http\Requests\ResourceDetailRequest;
 
 class DetailViewResource extends Resource
@@ -22,12 +27,17 @@ class DetailViewResource extends Resource
             $detail['fields'] = collect($detail['fields'])
                 ->when($request->viaResource, function ($fields) use ($request) {
                     return $fields->reject(function ($field) use ($request) {
-                        if (! $field instanceof RelatableField) {
+                        if ($field instanceof ListableField) {
+                            return true;
+                        } elseif (! $field instanceof RelatableField) {
                             return false;
                         }
 
-                        return $request->viaResource === $field->resourceName
-                                || in_array($request->relationshipType, ['hasOne', 'morphOne']);
+                        $relatedResource = $field->resourceName == $request->viaResource;
+
+                        return ($request->relationshipType === 'hasOne' && $field instanceof BelongsTo && $relatedResource) ||
+                            ($request->relationshipType === 'morphOne' && $field instanceof MorphTo && $relatedResource) ||
+                            (in_array($request->relationshipType, ['hasOne', 'morphOne']) && ($field instanceof MorphOne || $field instanceof HasOne));
                     });
                 })
                 ->values()->all();

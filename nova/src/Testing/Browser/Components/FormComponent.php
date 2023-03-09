@@ -7,6 +7,7 @@ use Laravel\Dusk\Browser;
 class FormComponent extends Component
 {
     protected $selector;
+
     protected $formUniqueId;
 
     /**
@@ -27,7 +28,7 @@ class FormComponent extends Component
      */
     public function selector()
     {
-        return $this->selector ?? '#app [data-testid="content"] form';
+        return $this->selector ?? '#app [data-testid="content"] form:not([data-testid="form-button"])';
     }
 
     /**

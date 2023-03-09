@@ -1,7 +1,7 @@
 <template>
   <div :class="`text-${field.textAlign}`">
-    <template v-if="hasValue">
-      <div v-if="field.asHtml" @click.stop v-html="field.value"></div>
+    <template v-if="fieldHasValue">
+      <div v-if="shouldDisplayAsHtml" @click.stop v-html="fieldValue"></div>
       <span v-else class="whitespace-nowrap">
         <a
           class="link-default"
@@ -10,7 +10,7 @@
           target="_blank"
           @click.stop
         >
-          {{ field.displayedAs }}
+          {{ fieldValue }}
         </a>
       </span>
     </template>
@@ -19,16 +19,11 @@
 </template>
 
 <script>
-export default {
-  props: ['resourceName', 'field'],
+import { FieldValue } from '@/mixins'
 
-  computed: {
-    /**
-     * Determine if the field has a value other than null.
-     */
-    hasValue() {
-      return this.field.value !== null
-    },
-  },
+export default {
+  mixins: [FieldValue],
+
+  props: ['resourceName', 'field'],
 }
 </script>

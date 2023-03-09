@@ -23,8 +23,10 @@ use Laravel\Nova\Util;
  */
 class MorphTo extends Field implements FilterableField, RelatableField
 {
-    use DeterminesIfCreateRelationCanBeShown,
+    use AssociatableRelation,
+        DeterminesIfCreateRelationCanBeShown,
         EloquentFilterable,
+        Peekable,
         ResolvesReverseRelation,
         Searchable,
         SupportsDependentFields;
@@ -49,6 +51,13 @@ class MorphTo extends Field implements FilterableField, RelatableField
      * @var string
      */
     public $resourceName;
+
+    /**
+     * The resolved MorphTo Resource.
+     *
+     * @var \Laravel\Nova\Resource|null
+     */
+    public $morphToResource;
 
     /**
      * The name of the Eloquent "morph to" relationship.
@@ -109,7 +118,7 @@ class MorphTo extends Field implements FilterableField, RelatableField
     /**
      * The default related class value for the field.
      *
-     * @var (\Closure(\Laravel\Nova\Http\Requests\NovaRequest):class-string<\Laravel\Nova\Resource>)|class-string<\Laravel\Nova\Resource>
+     * @var (\Closure(\Laravel\Nova\Http\Requests\NovaRequest):(class-string<\Laravel\Nova\Resource>))|class-string<\Laravel\Nova\Resource>
      */
     public $defaultResourceCallable;
 
@@ -150,17 +159,13 @@ class MorphTo extends Field implements FilterableField, RelatableField
     /**
      * Determine if the field should be displayed for the given request.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request&\Laravel\Nova\Http\Requests\NovaRequest  $request
      * @return bool
      */
     public function authorize(Request $request)
     {
         if (! $this->isNotRedundant($request)) {
             return false;
-        }
-
-        if (! $this->resourceClass) {
-            return true;
         }
 
         return parent::authorize($request);
@@ -218,7 +223,7 @@ class MorphTo extends Field implements FilterableField, RelatableField
 
                 $this->viewable = false;
             } else {
-                $resource = new $this->resourceClass($value);
+                $this->morphToResource = new $this->resourceClass($value);
 
                 $this->morphToId = Util::safeInt($this->morphToId);
 
@@ -226,7 +231,7 @@ class MorphTo extends Field implements FilterableField, RelatableField
                     $value, Nova::resourceForModel($value)
                 );
 
-                $this->viewable = ($this->viewable ?? true) && $resource->authorizedToView(app(NovaRequest::class));
+                $this->viewable = ($this->viewable ?? true) && $this->morphToResource->authorizedToView(app(NovaRequest::class));
             }
         }
     }
@@ -327,11 +332,10 @@ class MorphTo extends Field implements FilterableField, RelatableField
         $instance = Nova::modelInstanceForKey($request->{$this->attribute.'_type'});
 
         $morphType = $model->{$this->attribute}()->getMorphType();
-        if ($instance) {
-            $model->{$morphType} = $this->getMorphAliasForClass(
-                get_class($instance)
-            );
-        }
+
+        $model->{$morphType} = ! is_null($instance)
+            ? $this->getMorphAliasForClass(get_class($instance))
+            : null;
 
         $foreignKey = $this->getRelationForeignKeyName($model->{$this->attribute}());
 
@@ -340,6 +344,24 @@ class MorphTo extends Field implements FilterableField, RelatableField
         }
 
         parent::fillInto($request, $model, $foreignKey);
+    }
+
+    /**
+     * Hydrate the given attribute on the model based on the incoming request.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @param  object  $model
+     * @return mixed
+     */
+    public function fillForAction(NovaRequest $request, $model)
+    {
+        if ($request->exists($this->attribute)) {
+            $value = $request[$this->attribute];
+
+            $instance = Nova::modelInstanceForKey($request->{$this->attribute.'_type'});
+
+            $model->{$this->attribute} = $instance->query()->find($value);
+        }
     }
 
     /**
@@ -376,11 +398,17 @@ class MorphTo extends Field implements FilterableField, RelatableField
         $request->first === 'true'
                         ? $query->whereKey($model->newQueryWithoutScopes(), $request->current)
                         : $query->search(
-                                $request, $model->newQuery(), $request->search,
-                                [], [], TrashedStatus::fromBoolean($withTrashed)
-                          );
+                            $request, $model->newQuery(), $request->search,
+                            [], [], TrashedStatus::fromBoolean($withTrashed)
+                        );
 
         return $query->tap(function ($query) use ($request, $relatedResource, $model) {
+            if (is_callable($this->relatableQueryCallback)) {
+                call_user_func($this->relatableQueryCallback, $request, $query);
+
+                return;
+            }
+
             forward_static_call(
                 $this->morphableQueryCallable($request, $relatedResource, $model),
                 $request, $query, $this
@@ -565,7 +593,7 @@ class MorphTo extends Field implements FilterableField, RelatableField
     /**
      * Set the default relation resource class to be selected.
      *
-     * @param  (\Closure(\Laravel\Nova\Http\Requests\NovaRequest):class-string<\Laravel\Nova\Resource>)|class-string<\Laravel\Nova\Resource>  $resourceClass
+     * @param  (\Closure(\Laravel\Nova\Http\Requests\NovaRequest):(class-string<\Laravel\Nova\Resource>))|class-string<\Laravel\Nova\Resource>  $resourceClass
      * @return $this
      */
     public function defaultResource($resourceClass)
@@ -677,6 +705,8 @@ class MorphTo extends Field implements FilterableField, RelatableField
                 'morphToType' => $this->morphToType,
                 'morphToId' => $this->morphToId,
                 'morphToTypes' => $this->morphToTypes,
+                'peekable' => $this->isPeekable($request),
+                'hasFieldsToPeekAt' => $this->hasFieldsToPeekAt($request),
                 'resourceLabel' => $resourceClass ? $resourceClass::singularLabel() : null,
                 'resourceName' => $this->resourceName,
                 'reverse' => $this->isReverseRelation($request),

@@ -17,7 +17,7 @@ class GlobalSearch
     /**
      * The resource class names that should be searched.
      *
-     * @var array
+     * @var array<int, class-string<\Laravel\Nova\Resource>>
      */
     public $resources;
 
@@ -25,7 +25,7 @@ class GlobalSearch
      * Create a new global search instance.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @param  array  $resources
+     * @param  array<int, class-string<\Laravel\Nova\Resource>>  $resources
      * @return void
      */
     public function __construct(NovaRequest $request, $resources)
@@ -61,6 +61,7 @@ class GlobalSearch
                 ->cursor()
                 ->mapInto($resourceClass)
                 ->map(function ($resource) use ($resourceClass) {
+                    /** @var \Laravel\Nova\Resource $resource */
                     return $this->transformResult($resourceClass, $resource);
                 });
         }
@@ -69,10 +70,10 @@ class GlobalSearch
     /**
      * Transform the result from resource.
      *
-     * @template TResource of \Laravel\Nova\Resource
+     * @template TResourceValue of \Laravel\Nova\Resource
      *
-     * @param  class-string<TResource>  $resourceClass
-     * @param  TResource  $resource
+     * @param  class-string<TResourceValue>  $resourceClass
+     * @param  TResourceValue  $resource
      * @return array<string, mixed>
      */
     protected function transformResult($resourceClass, Resource $resource)

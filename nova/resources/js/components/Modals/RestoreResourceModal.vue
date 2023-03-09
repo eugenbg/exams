@@ -1,7 +1,7 @@
 <template>
-  <Modal data-testid="restore-resource-modal" :show="show" maxWidth="sm">
+  <Modal data-testid="restore-resource-modal" :show="show" size="sm">
     <form
-      @submit.prevent="$emit('confirm')"
+      @submit.prevent="handleConfirm"
       class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
       style="width: 460px"
     >
@@ -20,20 +20,22 @@
             type="button"
             data-testid="cancel-button"
             dusk="cancel-restore-button"
-            @click.prevent="$emit('close')"
+            @click.prevent="handleClose"
             class="mr-3"
           >
             {{ __('Cancel') }}
           </LinkButton>
 
-          <DefaultButton
+          <LoadingButton
             ref="confirmButton"
-            data-testid="confirm-button"
             dusk="confirm-restore-button"
+            data-testid="confirm-button"
+            :processing="working"
+            :disabled="working"
             type="submit"
           >
             {{ __('Restore') }}
-          </DefaultButton>
+          </LoadingButton>
         </div>
       </ModalFooter>
     </form>
@@ -48,6 +50,10 @@ export default {
     show: { type: Boolean, default: false },
   },
 
+  data: () => ({
+    working: false,
+  }),
+
   /**
    * Mount the component.
    */
@@ -55,6 +61,18 @@ export default {
     this.$nextTick(() => {
       // this.$refs.confirmButton.focus()
     })
+  },
+
+  methods: {
+    handleClose() {
+      this.$emit('close')
+      this.working = false
+    },
+
+    handleConfirm() {
+      this.$emit('confirm')
+      this.working = true
+    },
   },
 }
 </script>

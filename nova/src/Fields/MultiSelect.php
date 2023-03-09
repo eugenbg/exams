@@ -71,7 +71,7 @@ class MultiSelect extends Field implements FilterableField
         if ($request->exists($requestAttribute)) {
             $value = $request[$requestAttribute];
 
-            $model->{$attribute} = $this->isNullValue($value) ? null : json_decode($value, true);
+            $model->{$attribute} = $this->isValidNullValue($value) ? null : json_decode($value, true);
         }
     }
 

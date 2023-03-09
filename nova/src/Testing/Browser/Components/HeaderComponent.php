@@ -27,10 +27,7 @@ class HeaderComponent extends Component
     public function assert(Browser $browser)
     {
         tap($this->selector(), function ($selector) use ($browser) {
-            $browser->pause(500)
-                    ->waitFor($selector)
-                    ->assertVisible($selector)
-                    ->scrollIntoView($selector);
+            $browser->scrollIntoView($selector);
         });
     }
 

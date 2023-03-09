@@ -34,7 +34,7 @@ class Number extends Text
      *
      * @param  string  $name
      * @param  string|\Closure|callable|object|null  $attribute
-     * @param  (callable(mixed, mixed, ?string):mixed)|null  $resolveCallback
+     * @param  (callable(mixed, mixed, ?string):(mixed))|null  $resolveCallback
      * @return void
      */
     public function __construct($name, $attribute = null, callable $resolveCallback = null)
@@ -44,7 +44,7 @@ class Number extends Text
         $this->textAlign(Field::RIGHT_ALIGN)
             ->withMeta(['type' => 'number'])
             ->displayUsing(function ($value) {
-                return ! $this->isNullValue($value) ? (string) $value : null;
+                return ! $this->isValidNullValue($value) ? (string) $value : null;
             });
     }
 
@@ -148,10 +148,12 @@ class Number extends Text
      */
     public function jsonSerialize(): array
     {
-        return array_merge(parent::jsonSerialize(), array_filter([
+        return array_merge(parent::jsonSerialize(), collect([
             'min' => $this->min,
             'max' => $this->max,
             'step' => $this->step,
-        ]));
+        ])->reject(function ($value) {
+            return is_null($value) || (empty($value) && $value !== 0);
+        })->all());
     }
 }

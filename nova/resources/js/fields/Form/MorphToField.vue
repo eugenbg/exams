@@ -4,7 +4,8 @@
       :field="currentField"
       :show-errors="false"
       :field-name="fieldName"
-      :show-help-text="currentField.helpText != null"
+      :show-help-text="showHelpText"
+      :full-width-content="fullWidthContent"
     >
       <template #field>
         <div v-if="hasMorphToTypes" class="flex relative">
@@ -44,6 +45,7 @@
       :show-help-text="false"
       :field-name="fieldTypeName"
       v-if="hasMorphToTypes"
+      :full-width-content="fullWidthContent"
     >
       <template #field>
         <div class="flex items-center mb-3">
@@ -54,12 +56,13 @@
             :disabled="!resourceType || isLocked || currentlyIsReadonly"
             @input="performSearch"
             @clear="clearSelection"
-            @selected="selectResource"
+            @selected="selectResourceFromSearchInput"
             :debounce="currentField.debounce"
             :value="selectedResource"
             :data="availableResources"
             :clearable="currentField.nullable"
             trackBy="value"
+            :mode="mode"
           >
             <div v-if="selectedResource" class="flex items-center">
               <div v-if="selectedResource.avatar" class="mr-3">
@@ -83,7 +86,7 @@
 
                 <div class="flex-auto">
                   <div
-                    class="text-sm font-semibold leading-5 text-90"
+                    class="text-sm font-semibold leading-5"
                     :class="{ 'text-white': selected }"
                   >
                     {{ option.display }}
@@ -215,6 +218,20 @@ export default {
 
   methods: {
     /**
+     * Set the currently selected resource
+     */
+    selectResourceFromSearchInput(resource) {
+      if (this.field) {
+        this.emitFieldValueChange(
+          `${this.field.attribute}_type`,
+          this.resourceType
+        )
+      }
+
+      this.selectResource(resource)
+    },
+
+    /**
      * Select a resource using the <select> control
      */
     selectResourceFromSelectControl(value) {
@@ -222,6 +239,10 @@ export default {
       this.selectInitialResource()
 
       if (this.field) {
+        this.emitFieldValueChange(
+          `${this.field.attribute}_type`,
+          this.resourceType
+        )
         this.emitFieldValueChange(this.field.attribute, this.selectedResourceId)
       }
     },
@@ -316,7 +337,13 @@ export default {
       // }
 
       if (!this.isSearchable && this.resourceType) {
-        this.getAvailableResources()
+        this.getAvailableResources().then(() => {
+          this.emitFieldValueChange(
+            `${this.field.attribute}_type`,
+            this.resourceType
+          )
+          this.emitFieldValueChange(this.field.attribute, null)
+        })
       }
     },
 
@@ -348,6 +375,10 @@ export default {
       this.getAvailableResources().then(() => {
         this.selectInitialResource()
 
+        this.emitFieldValueChange(
+          `${this.field.attribute}_type`,
+          this.resourceType
+        )
         this.emitFieldValueChange(this.field.attribute, this.selectedResourceId)
       })
     },
@@ -406,21 +437,21 @@ export default {
      */
     queryParams() {
       return {
-        params: {
-          type: this.resourceType,
-          current: this.selectedResourceId,
-          first: this.shouldLoadFirstResource,
-          search: this.search,
-          withTrashed: this.withTrashed,
-          viaResource: this.viaResource,
-          viaResourceId: this.viaResourceId,
-          viaRelationship: this.viaRelationship,
-          editing: true,
-          editMode:
-            isNil(this.resourceId) || this.resourceId === ''
-              ? 'create'
-              : 'update',
-        },
+        type: this.resourceType,
+        current: this.selectedResourceId,
+        first: this.shouldLoadFirstResource,
+        search: this.search,
+        withTrashed: this.withTrashed,
+        viaResource: this.viaResource,
+        viaResourceId: this.viaResourceId,
+        viaRelationship: this.viaRelationship,
+        component: this.field.dependentComponentKey,
+        dependsOn: this.encodedDependentFieldValues,
+        editing: true,
+        editMode:
+          isNil(this.resourceId) || this.resourceId === ''
+            ? 'create'
+            : 'update',
       }
     },
 
@@ -484,6 +515,13 @@ export default {
         !this.currentlyIsReadonly &&
         this.currentField.displaysWithTrashed
       )
+    },
+
+    currentFieldValues() {
+      return {
+        [this.field.attribute]: this.value,
+        [`${this.field.attribute}_type`]: this.resourceType,
+      }
     },
   },
 }

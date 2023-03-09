@@ -54,7 +54,7 @@ class VaporFile extends Field implements StorableContract, DeletableContract, Do
     /**
      * The callback that should be used to determine the file's storage name.
      *
-     * @var (callable(\Illuminate\Http\Request):string)|null
+     * @var (callable(\Illuminate\Http\Request):(string))|null
      */
     public $storeAsCallback;
 
@@ -70,7 +70,7 @@ class VaporFile extends Field implements StorableContract, DeletableContract, Do
      *
      * @param  string  $name
      * @param  string|null  $attribute
-     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):mixed)|null  $storageCallback
+     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):(mixed))|null  $storageCallback
      * @return void
      */
     public function __construct($name, $attribute = null, $storageCallback = null)
@@ -143,13 +143,13 @@ class VaporFile extends Field implements StorableContract, DeletableContract, Do
     /**
      * Prepare the storage callback.
      *
-     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):mixed)|null  $storageCallback
+     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):(mixed))|null  $storageCallback
      * @return void
      */
     protected function prepareStorageCallback($storageCallback)
     {
         $this->storageCallback = $storageCallback ?? function ($request, $model, $attribute, $requestAttribute) {
-            return $this->mergeExtraStorageColumns($request, [
+            return $this->mergeExtraStorageColumns($request, $requestAttribute, [
                 $this->attribute => $this->storeFile($request, $requestAttribute),
             ]);
         };
@@ -179,13 +179,14 @@ class VaporFile extends Field implements StorableContract, DeletableContract, Do
      * Merge the specified extra file information columns into the storable attributes.
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  string  $requestAttribute
      * @param  array  $attributes
      * @return array
      */
-    protected function mergeExtraStorageColumns($request, array $attributes)
+    protected function mergeExtraStorageColumns($request, string $requestAttribute, array $attributes)
     {
         if ($this->originalNameColumn) {
-            $attributes[$this->originalNameColumn] = $request->input($this->attribute);
+            $attributes[$this->originalNameColumn] = $request->input($requestAttribute);
         }
 
         return $attributes;

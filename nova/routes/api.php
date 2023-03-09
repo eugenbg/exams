@@ -8,14 +8,17 @@ use Laravel\Nova\Http\Controllers\AttachableController;
 use Laravel\Nova\Http\Controllers\AttachedResourceUpdateController;
 use Laravel\Nova\Http\Controllers\CardController;
 use Laravel\Nova\Http\Controllers\CreationFieldController;
+use Laravel\Nova\Http\Controllers\CreationFieldSyncController;
 use Laravel\Nova\Http\Controllers\CreationPivotFieldController;
 use Laravel\Nova\Http\Controllers\DashboardCardController;
 use Laravel\Nova\Http\Controllers\DashboardController;
 use Laravel\Nova\Http\Controllers\DashboardMetricController;
 use Laravel\Nova\Http\Controllers\DetailMetricController;
+use Laravel\Nova\Http\Controllers\FieldAttachmentController;
 use Laravel\Nova\Http\Controllers\FieldController;
 use Laravel\Nova\Http\Controllers\FieldDestroyController;
 use Laravel\Nova\Http\Controllers\FieldDownloadController;
+use Laravel\Nova\Http\Controllers\FieldPreviewController;
 use Laravel\Nova\Http\Controllers\FilterController;
 use Laravel\Nova\Http\Controllers\ImpersonateController;
 use Laravel\Nova\Http\Controllers\LensActionController;
@@ -42,6 +45,7 @@ use Laravel\Nova\Http\Controllers\ResourceDestroyController;
 use Laravel\Nova\Http\Controllers\ResourceDetachController;
 use Laravel\Nova\Http\Controllers\ResourceForceDeleteController;
 use Laravel\Nova\Http\Controllers\ResourceIndexController;
+use Laravel\Nova\Http\Controllers\ResourcePeekController;
 use Laravel\Nova\Http\Controllers\ResourcePreviewController;
 use Laravel\Nova\Http\Controllers\ResourceRestoreController;
 use Laravel\Nova\Http\Controllers\ResourceSearchController;
@@ -52,7 +56,6 @@ use Laravel\Nova\Http\Controllers\ScriptController;
 use Laravel\Nova\Http\Controllers\SearchController;
 use Laravel\Nova\Http\Controllers\SoftDeleteStatusController;
 use Laravel\Nova\Http\Controllers\StyleController;
-use Laravel\Nova\Http\Controllers\TrixAttachmentController;
 use Laravel\Nova\Http\Controllers\UpdateFieldController;
 use Laravel\Nova\Http\Controllers\UpdatePivotFieldController;
 
@@ -64,19 +67,21 @@ Route::get('/styles/{style}', StyleController::class)->middleware(CheckResponseF
 Route::get('/search', SearchController::class);
 
 // Impersonation...
-Route::post('impersonate', [ImpersonateController::class, 'impersonate']);
+Route::post('impersonate', [ImpersonateController::class, 'startImpersonating']);
 Route::delete('impersonate', [ImpersonateController::class, 'stopImpersonating']);
 
 // Fields...
 Route::get('/{resource}/field/{field}', FieldController::class);
-Route::post('/{resource}/trix-attachment/{field}', [TrixAttachmentController::class, 'store']);
-Route::delete('/{resource}/trix-attachment/{field}', [TrixAttachmentController::class, 'destroyAttachment']);
-Route::delete('/{resource}/trix-attachment/{field}/{draftId}', [TrixAttachmentController::class, 'destroyPending']);
+Route::post('/{resource}/field/{field}/preview', FieldPreviewController::class);
+Route::post('/{resource}/field-attachment/{field}', [FieldAttachmentController::class, 'store']);
+Route::delete('/{resource}/field-attachment/{field}', [FieldAttachmentController::class, 'destroyAttachment']);
+Route::get('/{resource}/field-attachment/{field}/draftId', [FieldAttachmentController::class, 'draftId']);
+Route::delete('/{resource}/field-attachment/{field}/{draftId}', [FieldAttachmentController::class, 'destroyPending']);
 Route::get('/{resource}/creation-fields', CreationFieldController::class);
 Route::get('/{resource}/{resourceId}/update-fields', UpdateFieldController::class);
 Route::get('/{resource}/{resourceId}/creation-pivot-fields/{relatedResource}', CreationPivotFieldController::class);
 Route::get('/{resource}/{resourceId}/update-pivot-fields/{relatedResource}/{relatedResourceId}', UpdatePivotFieldController::class);
-Route::patch('/{resource}/creation-fields', [CreationFieldController::class, 'sync']);
+Route::patch('/{resource}/creation-fields', CreationFieldSyncController::class);
 Route::patch('/{resource}/{resourceId}/update-fields', [UpdateFieldController::class, 'sync']);
 Route::patch('/{resource}/{resourceId}/creation-pivot-fields/{relatedResource}', [CreationPivotFieldController::class, 'sync']);
 Route::patch('/{resource}/{resourceId}/update-pivot-fields/{relatedResource}/{relatedResourceId}', [UpdatePivotFieldController::class, 'sync']);
@@ -97,6 +102,7 @@ Route::delete('/nova-notifications/{notification}/delete', NotificationDeleteCon
 // Actions...
 Route::get('/{resource}/actions', [ActionController::class, 'index']);
 Route::post('/{resource}/action', [ActionController::class, 'store']);
+Route::patch('/{resource}/action', [ActionController::class, 'sync']);
 
 // Filters...
 Route::get('/{resource}/filters', FilterController::class);
@@ -110,6 +116,7 @@ Route::delete('/{resource}/lens/{lens}/force', LensResourceForceDeleteController
 Route::put('/{resource}/lens/{lens}/restore', LensResourceRestoreController::class);
 Route::get('/{resource}/lens/{lens}/actions', [LensActionController::class, 'index']);
 Route::post('/{resource}/lens/{lens}/action', [LensActionController::class, 'store']);
+Route::patch('/{resource}/lens/{lens}/action', [LensActionController::class, 'sync']);
 Route::get('/{resource}/lens/{lens}/filters', [LensFilterController::class, 'index']);
 
 // Cards / Metrics...
@@ -139,6 +146,7 @@ Route::put('/{resource}/restore', ResourceRestoreController::class);
 Route::delete('/{resource}/force', ResourceForceDeleteController::class);
 Route::get('/{resource}/{resourceId}', ResourceShowController::class);
 Route::get('/{resource}/{resourceId}/preview', ResourcePreviewController::class);
+Route::get('/{resource}/{resourceId}/peek', ResourcePeekController::class);
 Route::post('/{resource}', ResourceStoreController::class);
 Route::put('/{resource}/{resourceId}', ResourceUpdateController::class);
 Route::delete('/{resource}', ResourceDestroyController::class);

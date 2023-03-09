@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-group">
+  <div class="sidebar-group" v-if="item.items.length > 0">
     <button
       v-if="item.collapsable"
       @click="handleClick"
@@ -14,7 +14,6 @@
 
         <CollapseButton
           class="sidebar-group-collapse-btn ml-auto"
-          @click="handleClick"
           :collapsed="collapsed"
         />
       </h4>
@@ -49,6 +48,12 @@ export default {
   methods: {
     handleClick() {
       this.toggleCollapse()
+    },
+  },
+
+  computed: {
+    collapsedByDefault() {
+      return this.item?.collapsedByDefault ?? false
     },
   },
 }

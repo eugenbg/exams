@@ -43,4 +43,20 @@ interface ImpersonatesUsers
      * @return void
      */
     public function flushImpersonationData(Request $request);
+
+    /**
+     * Redirect an admin after starting impersonation.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function redirectAfterStartingImpersonation(Request $request);
+
+    /**
+     * Redirect an admin after finishing impersonation.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function redirectAfterStoppingImpersonation(Request $request);
 }

@@ -51,7 +51,7 @@
         <DefaultField
           :field="field"
           :errors="validationErrors"
-          :show-help-text="field.helpText != null"
+          :show-help-text="true"
         >
           <template #field>
             <SelectControl
@@ -91,7 +91,7 @@
               :via-resource="viaResource"
               :via-resource-id="viaResourceId"
               :via-relationship="viaRelationship"
-              :show-help-text="field.helpText != null"
+              :show-help-text="true"
             />
           </div>
         </LoadingView>

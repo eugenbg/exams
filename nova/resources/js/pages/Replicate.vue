@@ -10,6 +10,7 @@
     :via-relationship="viaRelationship"
     @update-form-status="onUpdateFormStatus"
     :should-override-meta="true"
+    :form-unique-id="formUniqueId"
   />
 </template>
 
@@ -22,8 +23,6 @@ export default {
 
   extends: ResourceCreate,
 
-  props: {
-    ...mapProps(['resourceId']),
-  },
+  props: mapProps(['resourceName', 'resourceId']),
 }
 </script>

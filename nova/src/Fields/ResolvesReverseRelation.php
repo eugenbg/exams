@@ -67,8 +67,8 @@ trait ResolvesReverseRelation
                         $relation = $viaModel->{$field->attribute}();
 
                         return $this->getRelationForeignKeyName($relation) === $this->getRelationForeignKeyName(
-                                $resource->model()->{$this->attribute}()
-                            );
+                            $resource->model()->{$this->attribute}()
+                        );
                     })->attribute ?? '';
         }
 

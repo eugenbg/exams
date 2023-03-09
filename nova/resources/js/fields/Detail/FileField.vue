@@ -1,51 +1,50 @@
 <template>
   <PanelItem :index="index" :field="field">
     <template #value>
-      <div>
-        <template v-if="shouldShowLoader">
-          <ImageLoader
-            :src="imageUrl"
-            :maxWidth="maxWidth"
-            :rounded="rounded"
-            @missing="value => (missing = value)"
+      <ImageLoader
+        v-if="shouldShowLoader"
+        :src="imageUrl"
+        :maxWidth="field.maxWidth || field.detailWidth"
+        :rounded="field.rounded"
+        :aspect="field.aspect"
+      />
+
+      <span v-if="fieldValue && !imageUrl" class="break-words">
+        {{ fieldValue }}
+      </span>
+
+      <span v-if="!fieldValue && !imageUrl">&mdash;</span>
+
+      <p v-if="shouldShowToolbar" class="flex items-center text-sm mt-3">
+        <a
+          v-if="field.downloadable"
+          :dusk="field.attribute + '-download-link'"
+          @keydown.enter.prevent="download"
+          @click.prevent="download"
+          tabindex="0"
+          class="cursor-pointer text-gray-500 inline-flex items-center"
+        >
+          <Icon
+            class="mr-2"
+            type="download"
+            view-box="0 0 24 24"
+            width="16"
+            height="16"
           />
-        </template>
-
-        <template v-if="field.value && !imageUrl">
-          <span class="break-words">{{ field.value }}</span>
-        </template>
-
-        <span v-if="!field.value && !imageUrl">&mdash;</span>
-
-        <p v-if="shouldShowToolbar" class="flex items-center text-sm mt-3">
-          <a
-            v-if="field.downloadable"
-            :dusk="field.attribute + '-download-link'"
-            @keydown.enter.prevent="download"
-            @click.prevent="download"
-            tabindex="0"
-            class="cursor-pointer text-gray-500 inline-flex items-center"
-          >
-            <Icon
-              class="mr-2"
-              type="download"
-              view-box="0 0 24 24"
-              width="16"
-              height="16"
-            />
-            <span class="class mt-1">{{ __('Download') }}</span>
-          </a>
-        </p>
-      </div>
+          <span class="class mt-1">{{ __('Download') }}</span>
+        </a>
+      </p>
     </template>
   </PanelItem>
 </template>
 
 <script>
-export default {
-  props: ['index', 'resource', 'resourceName', 'resourceId', 'field'],
+import { FieldValue } from '@/mixins'
 
-  data: () => ({ missing: false }),
+export default {
+  mixins: [FieldValue],
+
+  props: ['index', 'resource', 'resourceName', 'resourceId', 'field'],
 
   methods: {
     /**
@@ -66,13 +65,11 @@ export default {
 
   computed: {
     hasValue() {
-      return (
-        Boolean(this.field.value || this.imageUrl) && !Boolean(this.missing)
-      )
+      return Boolean(this.field.value || this.imageUrl)
     },
 
     shouldShowLoader() {
-      return Boolean(this.imageUrl)
+      return this.imageUrl
     },
 
     shouldShowToolbar() {
@@ -83,16 +80,8 @@ export default {
       return this.field.previewUrl || this.field.thumbnailUrl
     },
 
-    rounded() {
-      return this.field.rounded
-    },
-
-    maxWidth() {
-      return this.field.maxWidth || 320
-    },
-
     isVaporField() {
-      return this.field.component == 'vapor-file-field'
+      return this.field.component === 'vapor-file-field'
     },
   },
 }

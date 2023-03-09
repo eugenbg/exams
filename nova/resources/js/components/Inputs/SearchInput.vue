@@ -4,11 +4,12 @@
     :data-testid="dataTestid"
     :dusk="dataTestid"
     :class="{ 'opacity-75': disabled }"
+    ref="searchInputContainer"
   >
     <div class="relative">
       <div
         ref="input"
-        @click="open"
+        @click.stop="open"
         @focus="open"
         @keydown.down.prevent="open"
         @keydown.up.prevent="open"
@@ -89,7 +90,7 @@
           :dusk="`${dataTestid}-result-${index}`"
           :key="getTrackedByKey(option)"
           :ref="index === selected ? 'selected' : null"
-          @click="choose(option)"
+          @click.stop="choose(option)"
           class="px-3 py-1.5 cursor-pointer"
           :class="{
             'border-t border-gray-100 dark:border-gray-700': index != 0,
@@ -104,11 +105,7 @@
     </div>
 
     <teleport to="body">
-      <div
-        @click="show = !show"
-        v-show="show"
-        class="absolute inset-0 z-[35]"
-      />
+      <Backdrop @click="show = !show" :show="show" class="z-[35]" />
     </teleport>
   </div>
 </template>
@@ -118,6 +115,7 @@ import debounce from 'lodash/debounce'
 import findIndex from 'lodash/findIndex'
 import get from 'lodash/get'
 import { createPopper } from '@popperjs/core'
+import { mapProps } from '@/mixins'
 
 export default {
   emits: ['clear', 'input', 'selected'],
@@ -143,6 +141,7 @@ export default {
       type: Boolean,
       default: true,
     },
+    ...mapProps(['mode']),
   },
 
   data: () => ({
@@ -201,10 +200,18 @@ export default {
 
   mounted() {
     document.addEventListener('keydown', this.handleEscape)
+
+    if (['modal', 'action-modal'].includes(this.mode)) {
+      document.addEventListener('click', this.handleOutsideClick)
+    }
   },
 
   beforeUnmount() {
     document.removeEventListener('keydown', this.handleEscape)
+
+    if (['modal', 'action-modal'].includes(this.mode)) {
+      document.removeEventListener('click', this.handleOutsideClick)
+    }
   },
 
   methods: {
@@ -288,6 +295,21 @@ export default {
       this.$emit('selected', option)
       this.$refs.input.focus()
       this.$nextTick(() => this.close())
+    },
+
+    /**
+     * Handle closing the dropdown.
+     */
+    handleOutsideClick(e) {
+      if (
+        !(
+          this.$refs.searchInputContainer &&
+          (this.$refs.searchInputContainer == e.target ||
+            this.$refs.searchInputContainer.contains(e.target))
+        )
+      ) {
+        this.close()
+      }
     },
   },
 

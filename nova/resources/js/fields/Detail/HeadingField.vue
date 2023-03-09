@@ -1,13 +1,16 @@
 <template>
   <div
-    class="-mx-6 px-6 py-2 md:py-0 bg-gray-100 dark:bg-gray-700"
-    :class="{ 'border-t border-gray-100 dark:border-gray-700': index !== 0 }"
+    class="-mx-6"
+    :class="{
+      'border-t border-gray-100 dark:border-gray-700': index !== 0,
+      '-mt-2': index === 0,
+    }"
   >
-    <div class="w-full py-4">
+    <div class="w-full py-4 px-6">
       <slot name="value">
-        <p v-if="fieldValue && !shouldDisplayAsHtml" class="text-90">
+        <Heading :level="3" v-if="fieldValue && !shouldDisplayAsHtml">
           {{ fieldValue }}
-        </p>
+        </Heading>
         <div
           v-else-if="fieldValue && shouldDisplayAsHtml"
           v-html="field.value"
@@ -19,16 +22,14 @@
 </template>
 
 <script>
+import filled from '@/util/filled'
+
 export default {
   props: ['index', 'resource', 'resourceName', 'resourceId', 'field'],
 
   computed: {
     fieldValue() {
-      if (
-        this.field.value === '' ||
-        this.field.value === null ||
-        this.field.value === undefined
-      ) {
+      if (!filled(this.field.value)) {
         return false
       }
 

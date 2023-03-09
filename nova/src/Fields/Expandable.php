@@ -7,7 +7,7 @@ trait Expandable
     /**
      * The callback to be used to determine whether the field should be expanded.
      *
-     * @var (callable():bool)|null
+     * @var (callable():(bool))|null
      */
     public $expandableCallback;
 

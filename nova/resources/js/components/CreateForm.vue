@@ -11,6 +11,7 @@
     </template>
 
     <form
+      class="space-y-8"
       v-if="panels"
       @submit="submitViaCreateResource"
       @change="onUpdateFormStatus"
@@ -18,7 +19,7 @@
       autocomplete="off"
       ref="form"
     >
-      <div class="mb-8 space-y-4">
+      <div class="space-y-4">
         <component
           v-for="panel in panels"
           :key="panel.id"
@@ -32,11 +33,12 @@
           :resource-name="resourceName"
           :fields="panel.fields"
           :form-unique-id="formUniqueId"
-          mode="form"
+          :mode="mode"
           :validation-errors="validationErrors"
           :via-resource="viaResource"
           :via-resource-id="viaResourceId"
           :via-relationship="viaRelationship"
+          :show-help-text="true"
         />
       </div>
 

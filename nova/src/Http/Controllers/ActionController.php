@@ -3,9 +3,11 @@
 namespace Laravel\Nova\Http\Controllers;
 
 use Illuminate\Routing\Controller;
+use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Actions\ActionCollection;
 use Laravel\Nova\Http\Requests\ActionRequest;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Laravel\Nova\Nova;
 
 class ActionController extends Controller
 {
@@ -28,7 +30,7 @@ class ActionController extends Controller
         return response()->json(with([
             'actions' => $this->availableActions($request, $resource),
             'pivotActions' => [
-                'name' => $request->pivotName(),
+                'name' => Nova::humanize($request->pivotName()),
                 'actions' => $resource->availablePivotActions($request),
             ],
         ], function ($payload) use ($resource, $request) {
@@ -55,6 +57,31 @@ class ActionController extends Controller
         $request->validateFields();
 
         return $request->action()->handleRequest($request);
+    }
+
+    /**
+     * Sync an action field on the specified resources.
+     *
+     * @param  \Laravel\Nova\Http\Requests\ActionRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sync(ActionRequest $request)
+    {
+        $action = $this->availableActions($request, $request->newResource())
+            ->first(function ($action) use ($request) {
+                return $action->uriKey() === $request->query('action');
+            });
+
+        abort_unless($action instanceof Action, 404);
+
+        return response()->json(
+            collect($action->fields($request))
+                ->filter(function ($field) use ($request) {
+                    return $request->query('field') === $field->attribute &&
+                        $request->query('component') === $field->dependentComponentKey();
+                })->each->syncDependsOn($request)
+                ->first()
+        );
     }
 
     /**

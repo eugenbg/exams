@@ -26,20 +26,20 @@ use Laravel\Scout\Searchable;
  */
 abstract class Resource implements ArrayAccess, JsonSerializable, UrlRoutable
 {
-    use Authorizable,
-        ConditionallyLoadsAttributes,
-        DelegatesToResource,
-        FillsFields,
-        Makeable,
-        PerformsQueries,
-        PerformsValidation,
-        ResolvesActions,
-        ResolvesCards,
-        ResolvesFields,
-        ResolvesFilters,
-        ResolvesLenses,
-        SupportsPolling,
-        HasLifecycleMethods;
+    use Authorizable;
+    use ConditionallyLoadsAttributes;
+    use DelegatesToResource;
+    use FillsFields;
+    use Makeable;
+    use PerformsQueries;
+    use PerformsValidation;
+    use ResolvesActions;
+    use ResolvesCards;
+    use ResolvesFields;
+    use ResolvesFilters;
+    use ResolvesLenses;
+    use SupportsPolling;
+    use HasLifecycleMethods;
 
     /**
      * The default displayable pivot class name.
@@ -189,6 +189,14 @@ abstract class Resource implements ArrayAccess, JsonSerializable, UrlRoutable
     public static $debounce = 0.5;
 
     /**
+     * The click action to use when clicking on the resource in the table.
+     * Can be one of: 'detail' (default), 'edit', 'select', 'preview', or 'ignore'.
+     *
+     * @var string
+     */
+    public static $clickAction = 'detail';
+
+    /**
      * The callbacks to be called after saving an individual resource.
      *
      * @var array
@@ -241,9 +249,8 @@ abstract class Resource implements ArrayAccess, JsonSerializable, UrlRoutable
 
         return new static($model->replicate(
             $this->deletableFields(resolve(NovaRequest::class))
-                    ->map(function ($field) {
-                        return $field->attribute;
-                    })->all()
+                ->pluck('attribute')
+                ->all()
         ));
     }
 
@@ -501,6 +508,20 @@ abstract class Resource implements ArrayAccess, JsonSerializable, UrlRoutable
     public function serializeForPreview(NovaRequest $request)
     {
         return array_merge($this->serializeWithId($this->previewFields($request)), [
+            'title' => $this->title(),
+            'softDeleted' => $this->isSoftDeleted(),
+        ]);
+    }
+
+    /**
+     * Prepare the resource for JSON serialization.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @return array<string, mixed>
+     */
+    public function serializeForPeeking(NovaRequest $request)
+    {
+        return array_merge($this->serializeWithId($this->peekableFields($request)), [
             'title' => $this->title(),
             'softDeleted' => $this->isSoftDeleted(),
         ]);

@@ -4,7 +4,7 @@ namespace Laravel\Nova\Fields;
 
 use Illuminate\Support\Arr;
 
-class Line extends Text
+class Line extends Text implements Unfillable
 {
     const HEADING = 'extra-large';
 
@@ -52,7 +52,7 @@ class Line extends Text
      *
      * @param  string  $name
      * @param  string|callable|null  $attribute
-     * @param  (callable(mixed, mixed, ?string):mixed)|null  $resolveCallback
+     * @param  (callable(mixed, mixed, ?string):(mixed))|null  $resolveCallback
      * @return void
      */
     public function __construct($name, $attribute = null, callable $resolveCallback = null)

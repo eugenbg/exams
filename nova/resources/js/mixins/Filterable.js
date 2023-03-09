@@ -3,8 +3,15 @@ import pickBy from 'lodash/pickBy'
 
 export default {
   data: () => ({
+    filterHasLoaded: false,
     filterIsActive: false,
   }),
+
+  watch: {
+    encodedFilters(value) {
+      Nova.$emit('filter-changed', [value])
+    },
+  },
 
   methods: {
     /**
@@ -28,7 +35,6 @@ export default {
       })
 
       Nova.$emit('filter-reset')
-      Nova.$emit('filter-changed', [''])
     },
 
     /**
@@ -37,24 +43,24 @@ export default {
     filterChanged() {
       let filtersAreApplied =
         this.$store.getters[`${this.resourceName}/filtersAreApplied`]
-      let currentEncodedFilters =
-        this.$store.getters[`${this.resourceName}/currentEncodedFilters`]
 
       if (filtersAreApplied || this.filterIsActive) {
         this.filterIsActive = true
         this.updateQueryString({
           [this.pageParameter]: 1,
-          [this.filterParameter]: currentEncodedFilters,
+          [this.filterParameter]: this.encodedFilters,
         })
       }
-
-      Nova.$emit('filter-changed', [currentEncodedFilters])
     },
 
     /**
      * Set up filters for the current view
      */
     async initializeFilters(lens) {
+      if (this.filterHasLoaded === true) {
+        return
+      }
+
       // Clear out the filters from the store first
       this.$store.commit(`${this.resourceName}/clearFilters`)
 
@@ -74,6 +80,8 @@ export default {
       )
 
       await this.initializeState(lens)
+
+      this.filterHasLoaded = true
     },
 
     /**
@@ -98,6 +106,10 @@ export default {
      */
     filterParameter() {
       return this.resourceName + '_filter'
+    },
+
+    encodedFilters() {
+      return this.$store.getters[`${this.resourceName}/currentEncodedFilters`]
     },
   },
 }

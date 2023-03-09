@@ -34,6 +34,7 @@
     :is="actionResponseData.modal"
     @close="closeActionResponseModal"
     v-if="showActionResponseModal"
+    :show="showActionResponseModal"
     :data="actionResponseData"
   />
 </template>

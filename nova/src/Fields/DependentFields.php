@@ -3,6 +3,7 @@
 namespace Laravel\Nova\Fields;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
 /**
@@ -10,6 +11,16 @@ use Laravel\Nova\Http\Requests\NovaRequest;
  */
 trait DependentFields
 {
+    /**
+     * Resolve the dependent component key.
+     *
+     * @return string
+     */
+    public function dependentComponentKey()
+    {
+        return sprintf('%s.%s.%s', Str::slug(class_basename(get_called_class())), $this->component, $this->attribute);
+    }
+
     /**
      * Resolve dependent field value.
      *
@@ -74,10 +85,6 @@ trait DependentFields
      */
     protected function getDependentsAttributes(NovaRequest $request)
     {
-        if ($request->isResourceIndexRequest() || $request->isActionRequest()) {
-            return null;
-        }
-
         return collect($this->fieldDependencies ?? [])->map(function ($dependsOn) {
             return collect($dependsOn['attributes'])->mapWithKeys(function ($attribute) use ($dependsOn) {
                 return [$attribute => optional(Arr::get($dependsOn, 'formData'))->get($attribute)];

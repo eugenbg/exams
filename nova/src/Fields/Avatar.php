@@ -12,7 +12,7 @@ class Avatar extends Image implements Cover
      * @param  string|null  $name
      * @param  string|null  $attribute
      * @param  string|null  $disk
-     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):mixed)|null  $storageCallback
+     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):(mixed))|null  $storageCallback
      * @return void
      */
     public function __construct($name = 'Avatar', $attribute = null, $disk = null, $storageCallback = null)

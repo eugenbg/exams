@@ -7,7 +7,7 @@
       <slot>
         <FormLabel
           :label-for="labelFor || field.uniqueKey"
-          :class="{ 'mb-2': showHelpText && field.helpText }"
+          :class="{ 'mb-2': shouldShowHelpText }"
         >
           {{ fieldLabel }}
           <span v-if="field.required" class="text-red-500 text-sm">
@@ -21,8 +21,9 @@
       class="mt-1 md:mt-0 pb-5 px-6 md:px-8"
       :class="{
         'md:w-4/5': fullWidthContent,
-        'w-full md:w-3/5 md:py-5': !field.stacked,
-        'md:pt-2 w-full': field.stacked,
+        'md:w-3/5': !fullWidthContent,
+        'w-full md:py-5': !field.stacked,
+        'w-full md:pt-2': field.stacked,
       }"
     >
       <slot name="field" />
@@ -33,7 +34,7 @@
 
       <HelpText
         class="help-text mt-2"
-        v-if="showHelpText"
+        v-if="shouldShowHelpText"
         v-html="field.helpText"
       />
     </div>
@@ -66,6 +67,13 @@ export default {
       }
 
       return this.fieldName || this.field.name || this.field.singularLabel
+    },
+
+    /**
+     * Determine help text should be shown.
+     */
+    shouldShowHelpText() {
+      return this.showHelpText && this.field.helpText?.length > 0
     },
   },
 }

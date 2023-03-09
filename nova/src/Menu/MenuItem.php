@@ -2,11 +2,13 @@
 
 namespace Laravel\Nova\Menu;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Traits\Macroable;
 use InvalidArgumentException;
 use JsonSerializable;
 use Laravel\Nova\AuthorizedToSee;
 use Laravel\Nova\Makeable;
+use Laravel\Nova\Nova;
 use Laravel\Nova\URL;
 use Laravel\Nova\WithBadge;
 
@@ -68,6 +70,13 @@ class MenuItem implements JsonSerializable
      * @var bool
      */
     public $external = false;
+
+    /**
+     * The target value for external link.
+     *
+     * @var string|null
+     */
+    public $target;
 
     /**
      * Construct a new Menu Item instance.
@@ -183,10 +192,22 @@ class MenuItem implements JsonSerializable
     }
 
     /**
+     * Set the menu's target to open in a new tab.
+     *
+     * @return $this
+     */
+    public function openInNewTab()
+    {
+        $this->target = '_blank';
+
+        return $this;
+    }
+
+    /**
      * Set menu's method, and optionally data or headers.
      *
      * @param  string  $method
-     * @param  array<string, string>|null  $data
+     * @param  array<string, mixed>|null  $data
      * @param  array<string, string>|null  $headers
      * @return $this
      */
@@ -198,8 +219,24 @@ class MenuItem implements JsonSerializable
 
         $this->method = $method;
 
-        return $this->data($data)
-            ->headers($headers);
+        return $this->data($data)->headers($headers);
+    }
+
+    /**
+     * Set menu's method, and optionally data or headers. This request will be handled via Inertia.visit().
+     *
+     * @param  string  $method
+     * @param  array<string, mixed>|null  $data
+     * @param  array<string, string>|null  $headers
+     * @return static
+     */
+    public function inertia($method = 'GET', $data = null, $headers = null)
+    {
+        if ($method !== 'GET') {
+            $headers = Arr::wrap($headers);
+        }
+
+        return $this->method($method, $data, $headers);
     }
 
     /**
@@ -251,10 +288,11 @@ class MenuItem implements JsonSerializable
         $url = URL::make($this->path, $this->external);
 
         return [
-            'name' => __($this->name),
+            'name' => Nova::__($this->name),
             'component' => $this->component,
             'path' => (string) $url,
             'external' => $this->external,
+            'target' => $this->target,
             'method' => $this->method,
             'data' => $this->data,
             'headers' => $this->headers,

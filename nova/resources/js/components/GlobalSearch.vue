@@ -33,7 +33,7 @@
         <!-- Loader -->
         <div
           v-if="loading"
-          class="bg-white dark:bg-gray-800 py-6 overflow-hidden rounded-lg shadow-lg w-full mt-2 max-h-search overflow-y-auto"
+          class="bg-white dark:bg-gray-800 py-6 rounded-lg shadow-lg w-full mt-2 max-h-[calc(100vh - 5em)] overflow-x-hidden overflow-y-auto"
         >
           <Loader class="text-gray-300" width="40" />
         </div>
@@ -41,7 +41,8 @@
         <!-- Results -->
         <div
           v-if="results.length > 0"
-          class="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-lg w-full mt-2 max-h-search overflow-y-auto"
+          dusk="global-search-results"
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full mt-2 max-h-[calc(100vh - 5em)] overflow-x-hidden overflow-y-auto"
           ref="container"
         >
           <div v-for="group in formattedResults" :key="group.resourceTitle">
@@ -62,8 +63,8 @@
                   @click="goToSelectedResource(item)"
                   class="w-full flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 py-2 px-3 no-underline font-normal"
                   :class="{
-                    'bg-white dark:bg-gray-800': selected != item.index,
-                    'bg-gray-100 dark:bg-gray-700': selected == item.index,
+                    'bg-white dark:bg-gray-800': selected !== item.index,
+                    'bg-gray-100 dark:bg-gray-700': selected === item.index,
                   }"
                 >
                   <img
@@ -77,7 +78,7 @@
                   />
 
                   <div class="flex-auto text-left">
-                    <p class="text-90">{{ item.title }}</p>
+                    <p>{{ item.title }}</p>
                     <p v-if="item.subTitle" class="text-xs mt-1">
                       {{ item.subTitle }}
                     </p>
@@ -90,7 +91,8 @@
 
         <!-- No Results Found -->
         <div
-          v-if="!loading && results.length == 0"
+          v-if="!loading && results.length === 0"
+          dusk="global-search-empty-results"
           class="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-lg w-full mt-2 max-h-search overflow-y-auto"
         >
           <h3 class="text-xs font-bold uppercase tracking-wide bg-40 py-4 px-3">
@@ -100,10 +102,10 @@
       </div>
 
       <teleport to="#dropdowns">
-        <div
-          v-show="showOverlay"
+        <Backdrop
           @click="closeSearch"
-          class="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75 z-[45]"
+          :show="showOverlay"
+          class="bg-gray-500 dark:bg-gray-900 opacity-75 z-[45]"
         />
       </teleport>
     </div>
@@ -119,8 +121,16 @@ import filter from 'lodash/filter'
 import find from 'lodash/find'
 import uniqBy from 'lodash/uniqBy'
 
+function fetchSearchResults(search, cancelCallback) {
+  return Nova.request().get('/nova-api/search', {
+    params: { search },
+    cancelToken: new CancelToken(canceller => cancelCallback(canceller)),
+  })
+}
+
 export default {
   data: () => ({
+    commandPressed: false,
     searchFunction: null,
     canceller: null,
     showOverlay: false,
@@ -143,7 +153,16 @@ export default {
       this.resultsVisible = false
       this.selected = -1
       this.results = []
-      this.showOverlay = false
+      // this.showOverlay = false
+    },
+
+    resultsVisible(newValue) {
+      if (newValue === true) {
+        document.body.classList.add('overflow-y-hidden')
+        return
+      }
+
+      document.body.classList.remove('overflow-y-hidden')
     },
   },
 
@@ -159,18 +178,23 @@ export default {
         })
       })
 
+      if (this.searchTerm === '') {
+        this.canceller()
+        this.resultsVisible = false
+        this.results = []
+        return
+      }
+
       this.resultsVisible = true
       this.loading = true
       this.results = []
       this.selected = 0
 
       try {
-        const { data: results } = await Nova.request().get('/nova-api/search', {
-          params: { search: this.searchTerm },
-          cancelToken: new CancelToken(canceller => {
-            this.canceller = canceller
-          }),
-        })
+        const { data: results } = await fetchSearchResults(
+          this.searchTerm,
+          canceller => (this.canceller = canceller)
+        )
 
         this.results = results
         this.loading = false
@@ -187,6 +211,10 @@ export default {
   },
 
   mounted() {
+    // Handle Command+click results
+    window.addEventListener('keydown', this.handleKeydown)
+    window.addEventListener('keyup', this.handleKeyup)
+
     Nova.addShortcut('/', () => {
       this.focusSearch()
 
@@ -195,8 +223,12 @@ export default {
   },
 
   beforeUnmount() {
+    window.removeEventListener('keydown', this.handleKeydown)
+    window.removeEventListener('keyup', this.handleKeyup)
+
     if (this.canceller !== null) this.canceller()
 
+    this.resultsVisible = false
     Nova.disableShortcut('/')
   },
 
@@ -264,12 +296,26 @@ export default {
     goToCurrentlySelectedResource(event) {
       if (event.isComposing || event.keyCode === 229) return
 
-      const resource = find(
-        this.indexedResults,
-        res => res.index == this.selected
-      )
+      if (this.searchTerm !== '') {
+        const resource = find(
+          this.indexedResults,
+          res => res.index === this.selected
+        )
 
-      this.goToSelectedResource(resource)
+        this.goToSelectedResource(resource)
+      }
+    },
+
+    handleKeyup(e) {
+      if (e.key === 'Meta' || e.key === 'Control') {
+        this.commandPressed = false
+      }
+    },
+
+    handleKeydown(e) {
+      if (e.key === 'Meta' || e.key === 'Control') {
+        this.commandPressed = true
+      }
     },
 
     goToSelectedResource(resource) {
@@ -285,43 +331,36 @@ export default {
         url += '/edit'
       }
 
-      Nova.visit({
-        url,
-        remote: false,
-      })
+      this.commandPressed
+        ? window.open(url, '_blank')
+        : Nova.visit({ url, remote: false })
     },
   },
 
   computed: {
     indexedResults() {
-      return map(this.results, (item, index) => {
-        return { index, ...item }
-      })
+      return map(this.results, (item, index) => ({ index, ...item }))
     },
 
     formattedGroups() {
       return uniqBy(
-        map(this.indexedResults, item => {
-          return {
-            resourceName: item.resourceName,
-            resourceTitle: item.resourceTitle,
-          }
-        }),
+        map(this.indexedResults, item => ({
+          resourceName: item.resourceName,
+          resourceTitle: item.resourceTitle,
+        })),
         'resourceName'
       )
     },
 
     formattedResults() {
-      return map(this.formattedGroups, group => {
-        return {
-          resourceName: group.resourceName,
-          resourceTitle: group.resourceTitle,
-          items: filter(
-            this.indexedResults,
-            item => item.resourceName == group.resourceName
-          ),
-        }
-      })
+      return map(this.formattedGroups, group => ({
+        resourceName: group.resourceName,
+        resourceTitle: group.resourceTitle,
+        items: filter(
+          this.indexedResults,
+          item => item.resourceName === group.resourceName
+        ),
+      }))
     },
   },
 }

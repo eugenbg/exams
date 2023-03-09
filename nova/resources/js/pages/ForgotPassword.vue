@@ -6,7 +6,7 @@
       @submit.prevent="attempt"
       class="bg-white dark:bg-gray-800 shadow rounded-lg p-8 w-[25rem] mx-auto"
     >
-      <h2 class="text-2xl text-center font-normal mb-6 text-90">
+      <h2 class="text-2xl text-center font-normal mb-6">
         {{ __('Forgot your password?') }}
       </h2>
 
@@ -30,9 +30,14 @@
         </HelpText>
       </div>
 
-      <DefaultButton class="w-full flex justify-center" type="submit">
+      <LoadingButton
+        class="w-full flex justify-center"
+        type="submit"
+        :disabled="form.processing"
+        :loading="form.processing"
+      >
         {{ __('Send Password Reset Link') }}
-      </DefaultButton>
+      </LoadingButton>
     </form>
   </LoadingView>
 </template>

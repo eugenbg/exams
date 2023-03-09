@@ -3,6 +3,7 @@
     :field="currentField"
     :errors="errors"
     :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
   >
     <template #field>
       <!-- Search Input -->
@@ -18,6 +19,7 @@
         :clearable="currentField.nullable"
         trackBy="value"
         class="w-full"
+        :mode="mode"
       >
         <!-- The Selected Option Slot -->
         <div v-if="selectedOption" class="flex items-center">
@@ -27,7 +29,7 @@
         <template #option="{ selected, option }">
           <!-- Options List Slot -->
           <div
-            class="flex items-center text-sm font-semibold leading-5 text-90"
+            class="flex items-center text-sm font-semibold leading-5"
             :class="{ 'text-white': selected }"
           >
             {{ option.label }}
@@ -214,7 +216,7 @@ export default {
     },
 
     /**
-     * Return value has been setted.
+     * Determine if the field has a non-empty value.
      */
     hasValue() {
       return Boolean(

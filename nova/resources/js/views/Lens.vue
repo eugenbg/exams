@@ -16,6 +16,16 @@
       v-text="lensName"
     />
 
+    <div class="flex">
+      <IndexSearchInput
+        class="mb-6"
+        v-if="searchable"
+        :searchable="searchable"
+        v-model:keyword="search"
+        @update:keyword="search = $event"
+      />
+    </div>
+
     <Card>
       <ResourceTableToolbar
         :actions-endpoint="lensActionEndpoint"
@@ -58,8 +68,10 @@
         :resource-name="resourceName"
         :restore-all-matching-resources="restoreAllMatchingResources"
         :restore-selected-resources="restoreSelectedResources"
+        :current-page-count="resources.length"
         :select-all-checked="selectAllChecked"
         :select-all-matching-checked="selectAllMatchingResources"
+        @deselect="clearResourceSelections"
         :selected-resources="selectedResources"
         :selected-resources-for-action-selector="
           selectedResourcesForActionSelector
@@ -158,7 +170,7 @@ import {
   InteractsWithResourceInformation,
   SupportsPolling,
 } from '@/mixins'
-import { CancelToken, Cancel } from 'axios'
+import { CancelToken, isCancel } from 'axios'
 import { minimum } from '@/util'
 
 export default {
@@ -178,6 +190,11 @@ export default {
   props: {
     lens: {
       type: String,
+      required: true,
+    },
+
+    searchable: {
+      type: Boolean,
       required: true,
     },
   },
@@ -241,7 +258,7 @@ export default {
             this.handleResourcesLoaded()
           })
           .catch(e => {
-            if (e instanceof Cancel) {
+            if (isCancel(e)) {
               return
             }
 
@@ -282,7 +299,7 @@ export default {
           this.resourceHasActions = response.data.counts.resource > 0
         })
         .catch(e => {
-          if (e instanceof Cancel) {
+          if (isCancel(e)) {
             return
           }
 

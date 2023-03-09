@@ -3,10 +3,10 @@
     data-testid="delete-resource-modal"
     :show="show"
     role="alertdialog"
-    maxWidth="sm"
+    size="sm"
   >
     <form
-      @submit.prevent="$emit('confirm')"
+      @submit.prevent="handleConfirm"
       class="mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
     >
       <slot>
@@ -28,7 +28,7 @@
             type="button"
             data-testid="cancel-button"
             dusk="cancel-delete-button"
-            @click.prevent="$emit('close')"
+            @click.prevent="handleClose"
             class="mr-3"
           >
             {{ __('Cancel') }}

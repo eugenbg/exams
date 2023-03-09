@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Validator;
 use Laravel\Nova\Contracts\PivotableField;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
+/**
+ * @template TValidationRule of \Stringable|string|\Illuminate\Contracts\Validation\Rule|\Illuminate\Contracts\Validation\InvokableRule|callable>|\Stringable|string|((callable(string, mixed, \Closure):(void))
+ */
 trait PerformsValidation
 {
     /**
@@ -42,7 +45,7 @@ trait PerformsValidation
      * Get the validation rules for a resource creation request.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @return array<int, string|\Illuminate\Validation\Rule|\Illuminate\Contracts\Validation\Rule|callable>
+     * @return array<array-key, TValidationRule>
      */
     public static function rulesForCreation(NovaRequest $request)
     {
@@ -50,6 +53,7 @@ trait PerformsValidation
                     ->creationFields($request)
                     ->applyDependsOn($request)
                     ->withoutReadonly($request)
+                    ->withoutUnfillable()
                     ->mapWithKeys(function ($field) use ($request) {
                         return $field->getCreationRules($request);
                     })->all());
@@ -60,7 +64,7 @@ trait PerformsValidation
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
      * @param  string  $field
-     * @return array<int, string|\Illuminate\Validation\Rule|\Illuminate\Contracts\Validation\Rule|callable>
+     * @return array<array-key, TValidationRule>
      */
     public static function creationRulesFor(NovaRequest $request, $field)
     {
@@ -68,6 +72,7 @@ trait PerformsValidation
             ->availableFields($request)
             ->where('attribute', $field)
             ->applyDependsOn($request)
+            ->withoutUnfillable()
             ->mapWithKeys(function ($field) use ($request) {
                 return $field->getCreationRules($request);
             })->all());
@@ -110,7 +115,7 @@ trait PerformsValidation
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
      * @param  \Laravel\Nova\Resource|null  $resource
-     * @return array<int, string|\Illuminate\Validation\Rule|\Illuminate\Contracts\Validation\Rule|callable>
+     * @return array<array-key, TValidationRule>
      */
     public static function rulesForUpdate(NovaRequest $request, $resource = null)
     {
@@ -119,6 +124,7 @@ trait PerformsValidation
         return static::formatRules($request, $resource->updateFields($request)
                     ->applyDependsOn($request)
                     ->withoutReadonly($request)
+                    ->withoutUnfillable()
                     ->mapWithKeys(function ($field) use ($request) {
                         return $field->getUpdateRules($request);
                     })->all());
@@ -129,7 +135,7 @@ trait PerformsValidation
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
      * @param  string  $field
-     * @return array<int, string|\Illuminate\Validation\Rule|\Illuminate\Contracts\Validation\Rule|callable>
+     * @return array<array-key, TValidationRule>
      */
     public static function updateRulesFor(NovaRequest $request, $field)
     {
@@ -137,6 +143,7 @@ trait PerformsValidation
                     ->availableFields($request)
                     ->where('attribute', $field)
                     ->applyDependsOn($request)
+                    ->withoutUnfillable()
                     ->mapWithKeys(function ($field) use ($request) {
                         return $field->getUpdateRules($request);
                     })->all());
@@ -170,7 +177,7 @@ trait PerformsValidation
      * Get the validation rules for a resource attachment request.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @return array<int, string|\Illuminate\Validation\Rule|\Illuminate\Contracts\Validation\Rule|callable>
+     * @return array<int, TValidationRule>
      */
     public static function rulesForAttachment(NovaRequest $request)
     {
@@ -209,7 +216,7 @@ trait PerformsValidation
      * Get the validation rules for a resource attachment update request.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @return array<int, string|\Illuminate\Validation\Rule|\Illuminate\Contracts\Validation\Rule|callable>
+     * @return array<array-key, TValidationRule>
      */
     public static function rulesForAttachmentUpdate(NovaRequest $request)
     {
@@ -225,7 +232,7 @@ trait PerformsValidation
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
      * @param  array  $rules
-     * @return array<int, string|\Illuminate\Validation\Rule|\Illuminate\Contracts\Validation\Rule|callable>
+     * @return array<array-key, TValidationRule>
      */
     protected static function formatRules(NovaRequest $request, array $rules)
     {

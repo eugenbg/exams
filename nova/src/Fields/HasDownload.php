@@ -9,7 +9,7 @@ trait HasDownload
     /**
      * The callback used to generate the download HTTP response.
      *
-     * @var (callable(\Laravel\Nova\Http\Requests\NovaRequest, \Laravel\Nova\Resource, ?string, ?string):mixed)|null
+     * @var (callable(\Laravel\Nova\Http\Requests\NovaRequest, \Laravel\Nova\Resource, ?string, ?string):(mixed))|null
      */
     public $downloadResponseCallback;
 

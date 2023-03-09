@@ -4,6 +4,7 @@ namespace Laravel\Nova\Fields;
 
 use Closure;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Nova\Contracts\Deletable as DeletableContract;
 use Laravel\Nova\Contracts\Downloadable as DownloadableContract;
 use Laravel\Nova\Contracts\Storable as StorableContract;
@@ -39,7 +40,7 @@ class File extends Field implements StorableContract, DeletableContract, Downloa
     /**
      * The callback that should be used to determine the file's storage name.
      *
-     * @var (callable(\Illuminate\Http\Request):string)|null
+     * @var (callable(\Illuminate\Http\Request):(string))|null
      */
     public $storeAsCallback;
 
@@ -77,7 +78,7 @@ class File extends Field implements StorableContract, DeletableContract, Downloa
      * @param  string  $name
      * @param  string|callable|null  $attribute
      * @param  string|null  $disk
-     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):mixed)|null  $storageCallback
+     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):(mixed))|null  $storageCallback
      * @return void
      */
     public function __construct($name, $attribute = null, $disk = null, $storageCallback = null)
@@ -86,38 +87,29 @@ class File extends Field implements StorableContract, DeletableContract, Downloa
 
         $this->disk($disk);
 
-        $this->prepareStorageCallback($storageCallback);
+        $this
+            ->store(
+                $storageCallback ?? function ($request, $model, $attribute, $requestAttribute) {
+                    return $this->mergeExtraStorageColumns($request, $requestAttribute, [
+                        $this->attribute => $this->storeFile($request, $requestAttribute),
+                    ]);
+                }
+            )
+            ->thumbnail(function () {
+                return null;
+            })->preview(function () {
+                return null;
+            })->download(function ($request, $model) {
+                $name = $this->originalNameColumn ? $model->{$this->originalNameColumn} : null;
 
-        $this->thumbnail(function () {
-            return null;
-        })->preview(function () {
-            return null;
-        })->download(function ($request, $model) {
-            $name = $this->originalNameColumn ? $model->{$this->originalNameColumn} : null;
+                return Storage::disk($this->getStorageDisk())->download($this->value, $name);
+            })->delete(function () {
+                if ($this->value) {
+                    Storage::disk($this->getStorageDisk())->delete($this->value);
 
-            return Storage::disk($this->getStorageDisk())->download($this->value, $name);
-        })->delete(function () {
-            if ($this->value) {
-                Storage::disk($this->getStorageDisk())->delete($this->value);
-
-                return $this->columnsThatShouldBeDeleted();
-            }
-        });
-    }
-
-    /**
-     * Prepare the storage callback.
-     *
-     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, object, string, string, ?string, ?string):mixed)|null  $storageCallback
-     * @return void
-     */
-    protected function prepareStorageCallback($storageCallback)
-    {
-        $this->storageCallback = $storageCallback ?? function ($request, $model, $attribute, $requestAttribute) {
-            return $this->mergeExtraStorageColumns($request, [
-                $this->attribute => $this->storeFile($request, $requestAttribute),
-            ]);
-        };
+                    return $this->columnsThatShouldBeDeleted();
+                }
+            });
     }
 
     /**
@@ -129,11 +121,13 @@ class File extends Field implements StorableContract, DeletableContract, Downloa
      */
     protected function storeFile($request, $requestAttribute)
     {
+        $file = $this->retrieveFileFromRequest($request, $requestAttribute);
+
         if (! $this->storeAsCallback) {
-            return $request->file($requestAttribute)->store($this->getStorageDir(), $this->getStorageDisk());
+            return $file->store($this->getStorageDir(), $this->getStorageDisk());
         }
 
-        return $request->file($requestAttribute)->storeAs(
+        return $file->storeAs(
             $this->getStorageDir(), call_user_func($this->storeAsCallback, $request), $this->getStorageDisk()
         );
     }
@@ -142,12 +136,13 @@ class File extends Field implements StorableContract, DeletableContract, Downloa
      * Merge the specified extra file information columns into the storable attributes.
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  string  $requestAttribute
      * @param  array  $attributes
      * @return array
      */
-    protected function mergeExtraStorageColumns($request, array $attributes)
+    protected function mergeExtraStorageColumns($request, string $requestAttribute, array $attributes)
     {
-        $file = $request->file($this->attribute);
+        $file = $this->retrieveFileFromRequest($request, $requestAttribute);
 
         if ($this->originalNameColumn) {
             $attributes[$this->originalNameColumn] = $file->getClientOriginalName();
@@ -187,7 +182,7 @@ class File extends Field implements StorableContract, DeletableContract, Downloa
      */
     public function getStorageDisk()
     {
-        return $this->disk ?: config('nova.storage_disk', 'public');
+        return $this->disk ?: $this->getDefaultStorageDisk();
     }
 
     /**
@@ -293,7 +288,7 @@ class File extends Field implements StorableContract, DeletableContract, Downloa
      */
     protected function fillAttribute(NovaRequest $request, $requestAttribute, $model, $attribute)
     {
-        if (is_null($file = $request->file($requestAttribute)) || ! $file->isValid()) {
+        if (is_null($file = $this->retrieveFileFromRequest($request, $requestAttribute))) {
             return;
         }
 
@@ -362,5 +357,21 @@ class File extends Field implements StorableContract, DeletableContract, Downloa
             'deletable' => isset($this->deleteCallback) && $this->deletable,
             'acceptedTypes' => $this->acceptedTypes,
         ]);
+    }
+
+    /**
+     * Retrieve file instance from request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $requestAttribute
+     * @return \Illuminate\Http\UploadedFile|null
+     */
+    protected function retrieveFileFromRequest($request, string $requestAttribute)
+    {
+        $file = Str::contains($requestAttribute, '.') && $request->filled($requestAttribute)
+            ? data_get($request->all(), $requestAttribute)
+            : $request->file($requestAttribute);
+
+        return ! is_null($file) && $file->isValid() ? $file : null;
     }
 }

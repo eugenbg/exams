@@ -3,6 +3,7 @@
     :field="currentField"
     :errors="errors"
     :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
   >
     <template #field>
       <div class="flex items-center">
@@ -34,6 +35,7 @@
 import isNil from 'lodash/isNil'
 import { DateTime } from 'luxon'
 import { DependentFormField, HandlesValidationErrors } from '@/mixins'
+import filled from '@/util/filled'
 
 export default {
   mixins: [HandlesValidationErrors, DependentFormField],
@@ -48,9 +50,9 @@ export default {
      */
     setInitialValue() {
       if (!isNil(this.currentField.value)) {
-        this.value = DateTime.fromISO(
-          this.currentField.value || this.value
-        ).toISODate()
+        this.value = DateTime.fromISO(this.currentField.value || this.value, {
+          setZone: Nova.config('userTimezone') || Nova.config('timezone'),
+        }).toISODate()
       }
 
       this.formattedDate = this.value
@@ -73,7 +75,9 @@ export default {
     handleChange(event) {
       let value = event?.target?.value ?? event
 
-      this.value = DateTime.fromISO(value).toISODate()
+      this.value = DateTime.fromISO(value, {
+        setZone: Nova.config('userTimezone') || Nova.config('timezone'),
+      }).toISODate()
 
       if (this.field) {
         this.emitFieldValueChange(this.field.attribute, this.value)
@@ -86,9 +90,5 @@ export default {
       return Nova.config('userTimezone') || Nova.config('timezone')
     },
   },
-}
-
-function filled(value) {
-  return !isNil(value) && value !== ''
 }
 </script>

@@ -22,37 +22,12 @@ class NovaExceptionHandler extends ExceptionHandler
     public function register()
     {
         with(Nova::$reportCallback, function ($handler) {
-            /** @var (callable(\Throwable):void)|(\Closure(\Throwable):void)|null $handler */
+            /** @var (callable(\Throwable):(void))|(\Closure(\Throwable):(void))|null $handler */
             if ($handler instanceof Closure || is_callable($handler)) {
                 $this->reportable(function (Throwable $e) use ($handler) {
                     call_user_func($handler, $e);
                 })->stop();
             }
-        });
-
-        Nova::$reportCallback = null;
-    }
-
-    /**
-     * Report or log an exception.
-     *
-     * @param  \Throwable  $e
-     * @return void
-     *
-     * @throws \Throwable
-     */
-    public function report(Throwable $e)
-    {
-        with(Nova::$reportCallback, function ($handler) use ($e) {
-            /** @var (callable(\Throwable):void)|(\Closure(\Throwable):void)|null $handler */
-            if ($handler instanceof Closure || is_callable($handler)) {
-                return call_user_func($handler, $e);
-            }
-
-            parent::report($e);
-
-            $localHandler = resolve(\App\Exceptions\Handler::class);
-            $localHandler->report($e);
         });
     }
 

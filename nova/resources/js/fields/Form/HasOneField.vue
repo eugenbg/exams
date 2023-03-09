@@ -20,7 +20,7 @@
           @file-deleted="$emit('update-last-retrieved-at-timestamp')"
           @file-upload-started="$emit('file-upload-started')"
           @file-upload-finished="$emit('file-upload-finished')"
-          :show-help-text="field.helpText != null"
+          :show-help-text="showHelpText"
         />
       </template>
       <div v-else class="flex flex-col justify-center items-center px-6 py-8">
@@ -54,6 +54,7 @@ import {
   HandlesValidationErrors,
   mapProps,
 } from '@/mixins'
+import InlineFormData from './InlineFormData'
 
 export default {
   emits: [
@@ -91,7 +92,7 @@ export default {
   data() {
     return {
       loading: false,
-      isEditing: this.field.hasOneId !== null,
+      isEditing: this.field.hasOneId !== null || this.field.required === true,
       fields: [],
     }
   },
@@ -112,18 +113,10 @@ export default {
 
     fill(formData) {
       if (this.isEditing && this.isVisible) {
-        let entries = tap(new FormData(), form => {
+        tap(new InlineFormData(this.field.attribute, formData), form => {
           each(this.availableFields, field => {
             field.fill(form)
           })
-        })
-
-        entries.forEach((data, attribute) => {
-          this.fillIfVisible(
-            formData,
-            `${this.field.attribute}[${attribute}]`,
-            data || ''
-          )
         })
       }
     },
@@ -147,6 +140,7 @@ export default {
             viaResource: this.viaResource,
             viaResourceId: this.viaResourceId,
             viaRelationship: this.viaRelationship,
+            relationshipType: this.field.relationshipType,
           },
         })
         .catch(error => {

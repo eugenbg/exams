@@ -46,7 +46,7 @@ class KeyValue extends Field
     /**
      * The callback used to determine if the keys are readonly.
      *
-     * @var (callable(\Laravel\Nova\Http\Requests\NovaRequest):bool)|bool|null
+     * @var (callable(\Laravel\Nova\Http\Requests\NovaRequest):(bool))|bool|null
      */
     public $readonlyKeysCallback;
 
@@ -122,7 +122,7 @@ class KeyValue extends Field
     /**
      * Set the callback used to determine if the keys are readonly.
      *
-     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest):bool)|bool  $callback
+     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest):(bool))|bool  $callback
      * @return $this
      */
     public function disableEditingKeys($callback = true)

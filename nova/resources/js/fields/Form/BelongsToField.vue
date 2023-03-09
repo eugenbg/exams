@@ -3,9 +3,10 @@
     :field="currentField"
     :errors="errors"
     :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
   >
     <template #field>
-      <div class="flex items-center">
+      <div class="flex items-center space-x-2">
         <SearchInput
           v-if="isSearchable && !isLocked && !currentlyIsReadonly"
           :data-testid="`${field.resourceName}-search-input`"
@@ -19,6 +20,7 @@
           :clearable="currentField.nullable"
           trackBy="value"
           class="w-full"
+          :mode="mode"
         >
           <div v-if="selectedResource" class="flex items-center">
             <div v-if="selectedResource.avatar" class="mr-3">
@@ -32,29 +34,11 @@
           </div>
 
           <template #option="{ selected, option }">
-            <div class="flex items-center">
-              <div v-if="option.avatar" class="flex-none mr-3">
-                <img :src="option.avatar" class="w-8 h-8 rounded-full block" />
-              </div>
-
-              <div class="flex-auto">
-                <div
-                  class="text-sm font-semibold leading-normal"
-                  :class="{ 'text-white dark:text-gray-900': selected }"
-                >
-                  {{ option.display }}
-                </div>
-
-                <div
-                  v-if="currentField.withSubtitles"
-                  class="text-xs font-semibold leading-normal text-gray-500"
-                  :class="{ 'text-white dark:text-gray-700': selected }"
-                >
-                  <span v-if="option.subtitle">{{ option.subtitle }}</span>
-                  <span v-else>{{ __('No additional information...') }}</span>
-                </div>
-              </div>
-            </div>
+            <SearchInputResult
+              :option="option"
+              :selected="selected"
+              :with-subtitles="currentField.withSubtitles"
+            />
           </template>
         </SearchInput>
 
@@ -77,14 +61,15 @@
 
         <CreateRelationButton
           v-if="canShowNewRelationModal"
+          v-tooltip="__('Create :resource', { resource: field.singularLabel })"
           @click="openRelationModal"
-          class="ml-2"
           :dusk="`${field.attribute}-inline-create`"
         />
       </div>
 
       <CreateRelationModal
         :show="canShowNewRelationModal && relationModalOpen"
+        :size="field.modalSize"
         @set-resource="handleSetResource"
         @create-cancelled="closeRelationModal"
         :resource-name="field.resourceName"
@@ -150,14 +135,14 @@ export default {
     initializeComponent() {
       this.withTrashed = false
 
-      this.selectedResourceId = this.field.value
+      this.selectedResourceId = this.currentField.value
 
       if (this.editingExistingResource) {
         // If a user is editing an existing resource with this relation
         // we'll have a belongsToId on the field, and we should prefill
         // that resource in this field
         this.initializingWithExistingResource = true
-        this.selectedResourceId = this.field.belongsToId
+        this.selectedResourceId = this.currentField.belongsToId
       } else if (this.creatingViaRelatedResource) {
         // If the user is creating this resource via a related resource's index
         // page we'll have a viaResource and viaResourceId in the params and
@@ -312,6 +297,20 @@ export default {
         this.emitFieldValueChange(this.field.attribute, this.selectedResourceId)
       })
     },
+
+    onSyncedField() {
+      if (this.creatingViaRelatedResource) {
+        return
+      }
+
+      let emitChangesEvent = this.selectedResourceId != this.currentField.value
+
+      this.initializeComponent()
+
+      if (!this.editingExistingResource && emitChangesEvent) {
+        this.emitFieldValueChange(this.field.attribute, this.selectedResourceId)
+      }
+    },
   },
 
   computed: {
@@ -340,7 +339,7 @@ export default {
       return Boolean(
         this.editingExistingResource ||
           this.creatingViaRelatedResource ||
-          this.field.value
+          this.currentField.value
       )
     },
 
@@ -356,21 +355,21 @@ export default {
      */
     queryParams() {
       return {
-        params: {
-          current: this.selectedResourceId,
-          first: this.shouldLoadFirstResource,
-          search: this.search,
-          withTrashed: this.withTrashed,
-          resourceId: this.resourceId,
-          viaResource: this.viaResource,
-          viaResourceId: this.viaResourceId,
-          viaRelationship: this.viaRelationship,
-          editing: true,
-          editMode:
-            isNil(this.resourceId) || this.resourceId === ''
-              ? 'create'
-              : 'update',
-        },
+        current: this.selectedResourceId,
+        first: this.shouldLoadFirstResource,
+        search: this.search,
+        withTrashed: this.withTrashed,
+        resourceId: this.resourceId,
+        viaResource: this.viaResource,
+        viaResourceId: this.viaResourceId,
+        viaRelationship: this.viaRelationship,
+        component: this.field.dependentComponentKey,
+        dependsOn: this.encodedDependentFieldValues,
+        editing: true,
+        editMode:
+          isNil(this.resourceId) || this.resourceId === ''
+            ? 'create'
+            : 'update',
       }
     },
 

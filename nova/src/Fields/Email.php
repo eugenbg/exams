@@ -23,22 +23,12 @@ class Email extends Text implements FilterableField
      *
      * @param  string|null  $name
      * @param  string|\Closure|callable|object|null  $attribute
-     * @param  (callable(mixed, mixed, ?string):mixed)|null  $resolveCallback
+     * @param  (callable(mixed, mixed, ?string):(mixed))|null  $resolveCallback
      * @return void
      */
     public function __construct($name = 'Email', $attribute = 'email', callable $resolveCallback = null)
     {
         parent::__construct($name, $attribute, $resolveCallback);
-    }
-
-    /**
-     * Display the field as raw HTML using Vue.
-     *
-     * @return $this
-     */
-    public function copyable()
-    {
-        throw new \Exception('Email fields are not copyable since they display a mailto: link. You should use a Text field instead.');
     }
 
     /**
@@ -50,7 +40,7 @@ class Email extends Text implements FilterableField
     protected function makeFilter(NovaRequest $request)
     {
         return tap(new TextFilter($this), function ($filter) {
-            $filter->component = 'email-filter';
+            $filter->component = 'email-field';
         });
     }
 

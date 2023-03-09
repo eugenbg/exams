@@ -11,7 +11,7 @@
     <template #menu>
       <DropdownMenu
         class="divide-y divide-gray-100 dark:divide-gray-800 divide-solid"
-        width="240"
+        width="auto"
       >
         <DropdownMenuItem
           v-for="lens in lenses"

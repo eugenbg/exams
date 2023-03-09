@@ -11,19 +11,11 @@
 
 <script setup>
 const props = defineProps({
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-
-  checked: {
-    default: false,
-  },
+  checked: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['input'])
 
-const handleChange = e => {
-  emit('input', e)
-}
+const handleChange = e => emit('input', e)
 </script>

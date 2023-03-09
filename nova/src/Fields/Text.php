@@ -9,7 +9,10 @@ use Laravel\Nova\Http\Requests\NovaRequest;
 
 class Text extends Field implements FilterableField
 {
-    use FieldFilterable, SupportsDependentFields;
+    use FieldFilterable;
+    use HasSuggestions;
+    use SupportsDependentFields;
+    use SupportsMaxlength;
 
     /**
      * The field's component.
@@ -17,13 +20,6 @@ class Text extends Field implements FilterableField
      * @var string
      */
     public $component = 'text-field';
-
-    /**
-     * The field's suggestions callback.
-     *
-     * @var array|callable
-     */
-    public $suggestions;
 
     /**
      * Indicates if the field value should be displayed as HTML.
@@ -38,34 +34,6 @@ class Text extends Field implements FilterableField
      * @var bool
      */
     public $copyable = false;
-
-    /**
-     * Set the callback or array to be used to determine the field's suggestions list.
-     *
-     * @param  array|callable  $suggestions
-     * @return $this
-     */
-    public function suggestions($suggestions)
-    {
-        $this->suggestions = $suggestions;
-
-        return $this;
-    }
-
-    /**
-     * Resolve the display suggestions for the field.
-     *
-     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @return array
-     */
-    public function resolveSuggestions(NovaRequest $request)
-    {
-        if (is_callable($this->suggestions)) {
-            return call_user_func($this->suggestions, $request) ?? null;
-        }
-
-        return $this->suggestions;
-    }
 
     /**
      * Display the field as raw HTML using Vue.
@@ -145,11 +113,7 @@ class Text extends Field implements FilterableField
     {
         $request = app(NovaRequest::class);
 
-        if (
-            $request->isCreateOrAttachRequest()
-            || $request->isUpdateOrUpdateAttachedRequest()
-            || $request->isActionRequest() === true
-        ) {
+        if ($request->isFormRequest()) {
             return array_merge(parent::jsonSerialize(), [
                 'suggestions' => $this->resolveSuggestions($request),
             ]);

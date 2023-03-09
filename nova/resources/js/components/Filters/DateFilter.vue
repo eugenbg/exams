@@ -35,7 +35,7 @@ export default {
 
   methods: {
     handleChange(event) {
-      let value = event?.target?.value || event
+      let value = event?.target?.value ?? event
 
       this.$store.commit(`${this.resourceName}/updateFilterState`, {
         filterClass: this.filterKey,

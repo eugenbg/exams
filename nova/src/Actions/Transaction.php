@@ -12,7 +12,7 @@ class Transaction
      * Perform the given callbacks within a batch transaction.
      *
      * @param  callable(string):mixed  $callback
-     * @param  (callable(string):void)|null  $finished
+     * @param  (callable(string):(void))|null  $finished
      * @return mixed
      *
      * @throws \Throwable

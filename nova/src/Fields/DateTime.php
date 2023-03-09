@@ -9,7 +9,7 @@ use DateTimeInterface;
 use Exception;
 use Illuminate\Support\Arr;
 use Laravel\Nova\Contracts\FilterableField;
-use Laravel\Nova\Fields\Filters\DateFilter;
+use Laravel\Nova\Fields\Filters\DateTimeFilter;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
 class DateTime extends Field implements FilterableField
@@ -56,7 +56,7 @@ class DateTime extends Field implements FilterableField
      *
      * @param  string  $name
      * @param  string|\Closure|callable|object|null  $attribute
-     * @param  (callable(mixed, mixed, ?string):mixed)|null  $resolveCallback
+     * @param  (callable(mixed, mixed, ?string):(mixed))|null  $resolveCallback
      * @return void
      */
     public function __construct($name, $attribute = null, callable $resolveCallback = null)
@@ -153,12 +153,13 @@ class DateTime extends Field implements FilterableField
         $this->usesCustomizedDisplay = true;
 
         if ($value instanceof DateTimeInterface) {
-            $this->originalValue = $value instanceof CarbonInterface
+            $this->value = $value instanceof CarbonInterface
                 ? $value->toIso8601String()
                 : $value->format(DateTimeInterface::ATOM);
         }
 
-        $this->value = call_user_func($this->displayCallback, $value, $resource, $attribute);
+        $this->originalValue = $this->value;
+        $this->displayedAs = call_user_func($this->displayCallback, $value, $resource, $attribute);
     }
 
     /**
@@ -169,7 +170,7 @@ class DateTime extends Field implements FilterableField
      */
     protected function makeFilter(NovaRequest $request)
     {
-        return new DateFilter($this);
+        return new DateTimeFilter($this);
     }
 
     /**
@@ -183,8 +184,7 @@ class DateTime extends Field implements FilterableField
             [$min, $max] = $value;
 
             if (! is_null($min) && ! is_null($max)) {
-                return $query->whereDate($attribute, '>=', $min)
-                    ->whereDate($attribute, '<=', $max);
+                return $query->whereBetween($attribute, [$min, $max]);
             } elseif (! is_null($min)) {
                 return $query->whereDate($attribute, '>=', $min);
             }

@@ -2,14 +2,16 @@
 
 namespace Laravel\Nova\Actions;
 
+use Illuminate\Bus\Batchable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Laravel\Nova\Contracts\BatchableAction;
 use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Nova;
 
 class CallQueuedAction
 {
-    use CallsQueuedActions;
+    use Batchable, CallsQueuedActions;
 
     /**
      * The Eloquent model/data collection.
@@ -45,7 +47,12 @@ class CallQueuedAction
     public function handle()
     {
         $this->callAction(function ($action) {
-            return $action->withActionBatchId($this->actionBatchId)->{$this->method}($this->fields, $this->models);
+            if ($action instanceof BatchableAction) {
+                $action->withBatchId($this->batchId);
+            }
+
+            return $action->withActionBatchId($this->actionBatchId)
+                        ->{$this->method}($this->fields, $this->models);
         });
     }
 

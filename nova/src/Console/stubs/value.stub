@@ -45,14 +45,4 @@ class {{ class }} extends Value
     {
         // return now()->addMinutes(5);
     }
-
-    /**
-     * Get the URI key for the metric.
-     *
-     * @return string
-     */
-    public function uriKey()
-    {
-        return 'uri-key';
-    }
 }

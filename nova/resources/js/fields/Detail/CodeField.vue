@@ -32,7 +32,9 @@ export default {
     }
 
     this.codemirror = CodeMirror.fromTextArea(this.$refs.theTextarea, config)
-    this.codemirror?.getDoc().setValue(this.field.value)
+    this.codemirror
+      ?.getDoc()
+      .setValue(this.field.displayedAs || this.field.value)
     this.codemirror?.setSize('100%', this.field.height)
   },
 }

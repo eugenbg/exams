@@ -20,7 +20,7 @@ class Dashboard extends Tool
         $dashboards = collect(Nova::availableDashboards($request));
 
         if ($dashboards->count() > 1) {
-            return MenuSection::make('Dashboards', $dashboards->map(function ($dashboard) use ($request) {
+            return MenuSection::make(Nova::__('Dashboards'), $dashboards->map(function ($dashboard) use ($request) {
                 return $dashboard->menu($request);
             }))
             ->collapsable()

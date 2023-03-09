@@ -49,7 +49,7 @@ class Date extends Field implements FilterableField
      *
      * @param  string  $name
      * @param  string|\Closure|callable|object|null  $attribute
-     * @param  (callable(mixed, mixed, ?string):mixed)|null  $resolveCallback
+     * @param  (callable(mixed, mixed, ?string):(mixed))|null  $resolveCallback
      * @return void
      */
     public function __construct($name, $attribute = null, callable $resolveCallback = null)
@@ -118,10 +118,11 @@ class Date extends Field implements FilterableField
      * Resolve the default value for the field.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @return string
+     * @return string|null
      */
     protected function resolveDefaultValue(NovaRequest $request)
     {
+        /** @var \DateTimeInterface|string|null $value */
         $value = parent::resolveDefaultValue($request);
 
         if ($value instanceof DateTimeInterface) {

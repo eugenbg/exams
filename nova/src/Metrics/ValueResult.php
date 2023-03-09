@@ -55,7 +55,7 @@ class ValueResult implements JsonSerializable
      *
      * @var string
      */
-    public $format;
+    public $format = '(0[.]00a)';
 
     /**
      * Determines whether a value of 0 counts as "No Current Data".
@@ -63,6 +63,20 @@ class ValueResult implements JsonSerializable
      * @var bool
      */
     public $zeroResult = false;
+
+    /**
+     * Indicates if the metric value is copyable inside Nova.
+     *
+     * @var bool
+     */
+    public $copyable = false;
+
+    /**
+     * The metric tooltip value formatting.
+     *
+     * @var string
+     */
+    public $tooltipFormat = '(0[.]00a)';
 
     /**
      * Create a new value result instance.
@@ -164,6 +178,19 @@ class ValueResult implements JsonSerializable
     }
 
     /**
+     * Set the metric value tooltip formatting.
+     *
+     * @param  string  $format
+     * @return $this
+     */
+    public function tooltipFormat($format)
+    {
+        $this->tooltipFormat = $format;
+
+        return $this;
+    }
+
+    /**
      * Sets the zeroResult value.
      *
      * @param  bool  $zeroResult
@@ -177,6 +204,18 @@ class ValueResult implements JsonSerializable
     }
 
     /**
+     * Allow the metric value to be copyable to the clipboard inside Nova.
+     *
+     * @return $this
+     */
+    public function copyable()
+    {
+        $this->copyable = true;
+
+        return $this;
+    }
+
+    /**
      * Prepare the metric result for JSON serialization.
      *
      * @return array<string, mixed>
@@ -184,13 +223,15 @@ class ValueResult implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'value' => $this->resolveTransformedValue($this->value),
+            'copyable' => $this->copyable,
+            'format' => $this->format,
+            'prefix' => $this->prefix,
             'previous' => $this->resolveTransformedValue($this->previous),
             'previousLabel' => $this->previousLabel,
-            'prefix' => $this->prefix,
             'suffix' => $this->suffix,
             'suffixInflection' => $this->suffixInflection,
-            'format' => $this->format,
+            'tooltipFormat' => $this->tooltipFormat,
+            'value' => $this->resolveTransformedValue($this->value),
             'zeroResult' => $this->zeroResult,
         ];
     }

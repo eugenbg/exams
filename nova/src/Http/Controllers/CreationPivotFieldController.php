@@ -34,7 +34,7 @@ class CreationPivotFieldController extends Controller
                 $request, $request->relatedResource
             )->filter(function ($field) use ($request) {
                 return $request->query('field') === $field->attribute &&
-                        $request->query('component') === $field->component;
+                        $request->query('component') === $field->dependentComponentKey();
             })->applyDependsOn($request)
             ->first()
         );

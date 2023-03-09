@@ -4,6 +4,7 @@ namespace Laravel\Nova\Fields;
 
 use Illuminate\Support\Arr;
 use Laravel\Nova\Contracts\FilterableField;
+use Laravel\Nova\Exceptions\NovaException;
 use Laravel\Nova\Fields\Filters\SelectFilter;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
@@ -46,6 +47,10 @@ class Select extends Field implements FilterableField
     public function displayUsingLabels()
     {
         $this->displayUsing(function ($value) {
+            if (is_null($value) || $this->isValidNullValue($value)) {
+                return $value;
+            }
+
             return collect($this->serializeOptions(false))
                     ->where('value', $value)
                     ->first()['label'] ?? $value;
@@ -63,7 +68,7 @@ class Select extends Field implements FilterableField
      */
     public function withSubtitles()
     {
-        throw new \Exception('The `withSubtitles` option is not available on Select fields.');
+        throw NovaException::helperNotSupported(__METHOD__, __CLASS__);
     }
 
     /**
@@ -90,6 +95,7 @@ class Select extends Field implements FilterableField
                 'name',
                 'attribute',
                 'options',
+                'searchable',
             ]);
         });
     }

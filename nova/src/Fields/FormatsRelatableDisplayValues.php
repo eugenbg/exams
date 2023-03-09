@@ -11,7 +11,7 @@ trait FormatsRelatableDisplayValues
     /**
      * The column that should be displayed for the field.
      *
-     * @var (callable(mixed):string)|null
+     * @var (callable(mixed):(string))|null
      */
     public $display;
 
@@ -37,7 +37,7 @@ trait FormatsRelatableDisplayValues
     /**
      * Set the column that should be displayed for the field.
      *
-     * @param  (\Closure(mixed):string)|string  $display
+     * @param  (\Closure(mixed):(string))|string  $display
      * @return $this
      */
     public function display($display)

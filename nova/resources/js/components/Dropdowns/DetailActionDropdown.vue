@@ -13,7 +13,7 @@
       </DropdownTrigger>
 
       <template #menu>
-        <DropdownMenu width="190" class="px-1">
+        <DropdownMenu width="auto" class="px-1">
           <ScrollWrap
             :height="250"
             class="divide-y divide-gray-100 dark:divide-gray-800 divide-solid"
@@ -78,6 +78,7 @@
                 data-testid="open-force-delete-modal"
                 dusk="open-force-delete-modal-button"
                 @click.prevent="openForceDeleteModal"
+                :destructive="true"
               >
                 {{ __('Force Delete Resource') }}
               </DropdownMenuItem>
@@ -96,6 +97,7 @@
                 :dusk="`${resource.id.value}-inline-action-${action.uriKey}`"
                 @click="() => handleActionClick(action.uriKey)"
                 :title="action.name"
+                :destructive="action.destructive"
               >
                 {{ action.name }}
               </DropdownMenuItem>
@@ -156,6 +158,7 @@ import {
   Deletable,
   HandlesActions,
   InteractsWithResourceInformation,
+  mapProps,
 } from '@/mixins'
 import { mapGetters, mapActions } from 'vuex'
 
@@ -168,12 +171,15 @@ export default {
 
   props: {
     resource: { type: Object },
-    resourceName: String,
     actions: { type: Array },
     viaManyToMany: { type: Boolean },
-    viaResource: { type: String, default: '' },
-    viaResourceId: { type: String, default: '' },
-    viaRelationship: { type: String, default: '' },
+
+    ...mapProps([
+      'resourceName',
+      'viaResource',
+      'viaResourceId',
+      'viaRelationship',
+    ]),
   },
 
   data: () => ({

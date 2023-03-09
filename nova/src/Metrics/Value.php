@@ -130,7 +130,7 @@ abstract class Value extends RangedMetric
         if ($request->range === 'ALL') {
             return $this->result(
                 round(
-                    with(clone $query)->{$function}($column),
+                    (clone $query)->{$function}($column),
                     $this->roundingPrecision,
                     $this->roundingMode
                 )
@@ -139,12 +139,13 @@ abstract class Value extends RangedMetric
 
         $dateColumn = $dateColumn ?? $query->getModel()->getQualifiedCreatedAtColumn();
         $timezone = Nova::resolveUserTimezone($request) ?? $this->getDefaultTimezone($request);
+        $range = $request->range ?? 1;
 
-        $currentRange = $this->currentRange($request->range, $timezone);
-        $previousRange = $this->previousRange($request->range, $timezone);
+        $currentRange = $this->currentRange($range, $timezone);
+        $previousRange = $this->previousRange($range, $timezone);
 
         $previousValue = round(
-            with(clone $query)->whereBetween(
+            (clone $query)->whereBetween(
                 $dateColumn, $this->formatQueryDateBetween($previousRange)
             )->{$function}($column) ?? 0,
             $this->roundingPrecision,
@@ -153,7 +154,7 @@ abstract class Value extends RangedMetric
 
         return $this->result(
             round(
-                with(clone $query)->whereBetween(
+                (clone $query)->whereBetween(
                     $dateColumn, $this->formatQueryDateBetween($currentRange)
                 )->{$function}($column) ?? 0,
                 $this->roundingPrecision,

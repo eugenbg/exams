@@ -24,7 +24,7 @@
                 :data-testid="`${resource.id.value}-preview-button`"
                 :dusk="`${resource.id.value}-preview-button`"
                 as="button"
-                @click.prevent="openPreviewModal"
+                @click.prevent="$emit('show-preview')"
                 :title="__('Preview')"
               >
                 {{ __('Preview') }}
@@ -61,6 +61,7 @@
                 {{ __('Impersonate') }}
               </DropdownMenuItem>
             </div>
+
             <div
               v-if="actions.length > 0"
               :dusk="`${resource.id.value}-inline-actions`"
@@ -74,6 +75,7 @@
                 :dusk="`${resource.id.value}-inline-action-${action.uriKey}`"
                 @click="() => handleActionClick(action.uriKey)"
                 :title="action.name"
+                :destructive="action.destructive"
               >
                 {{ action.name }}
               </DropdownMenuItem>
@@ -106,52 +108,37 @@
       :show="showActionResponseModal"
       :data="actionResponseData"
     />
-
-    <PreviewResourceModal
-      v-if="previewModalOpen"
-      :resource-id="resource.id.value"
-      :resource-name="resourceName"
-      :show="previewModalOpen"
-      @close="closePreviewModal"
-      @confirm="closePreviewModal"
-    />
   </div>
 </template>
 
 <script>
-import HandlesActions from '@/mixins/HandlesActions'
+import { HandlesActions, mapProps } from '@/mixins'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
   mixins: [HandlesActions],
 
+  emits: ['show-preview'],
+
   props: {
     resource: { type: Object },
-    resourceName: String,
     actions: { type: Array },
     viaManyToMany: { type: Boolean },
-    viaResource: { type: String, default: '' },
-    viaResourceId: { type: String, default: '' },
-    viaRelationship: { type: String, default: '' },
+
+    ...mapProps([
+      'resourceName',
+      'viaResource',
+      'viaResourceId',
+      'viaRelationship',
+    ]),
   },
 
   data: () => ({
     showActionResponseModal: false,
     actionResponseData: {},
-    previewModalOpen: false,
   }),
 
-  methods: {
-    ...mapActions(['startImpersonating']),
-
-    openPreviewModal() {
-      this.previewModalOpen = true
-    },
-
-    closePreviewModal() {
-      this.previewModalOpen = false
-    },
-  },
+  methods: mapActions(['startImpersonating']),
 
   computed: {
     ...mapGetters(['currentUser']),

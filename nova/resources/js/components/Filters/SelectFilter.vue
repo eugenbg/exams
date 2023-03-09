@@ -12,7 +12,7 @@
         :options="filter.options"
         label="label"
       >
-        <option value="" :selected="value == ''">&mdash;</option>
+        <option value="" :selected="value == ''">{{ __('&mdash;') }}</option>
       </SelectControl>
     </template>
   </FilterContainer>

@@ -31,9 +31,9 @@
 
 <script>
 import debounce from 'lodash/debounce'
-import isNil from 'lodash/isNil'
 import omit from 'lodash/omit'
 import toNumber from 'lodash/toNumber'
+import filled from '@/util/filled'
 
 export default {
   emits: ['change'],
@@ -161,9 +161,5 @@ export default {
       }
     },
   },
-}
-
-function filled(value) {
-  return !isNil(value) && value !== ''
 }
 </script>

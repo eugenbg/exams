@@ -3,6 +3,7 @@
     :field="currentField"
     :errors="errors"
     :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
   >
     <template #field>
       <input
@@ -12,7 +13,7 @@
         v-model="value"
         class="w-full form-control form-input form-input-bordered"
         :class="errorClasses"
-        :placeholder="field.name"
+        :placeholder="placeholder"
         autocomplete="new-password"
         :disabled="currentlyIsReadonly"
       />

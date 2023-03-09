@@ -12,6 +12,7 @@ use JsonSerializable;
 use Laravel\Nova\AuthorizedToSee;
 use Laravel\Nova\Exceptions\MissingActionHandlerException;
 use Laravel\Nova\Fields\ActionFields;
+use Laravel\Nova\Fields\FieldCollection;
 use Laravel\Nova\Http\Requests\ActionRequest;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Makeable;
@@ -20,6 +21,13 @@ use Laravel\Nova\Nova;
 use Laravel\Nova\ProxiesCanSeeToGate;
 use ReflectionClass;
 
+/**
+ * @phpstan-type TAuthoriseCallback \Closure(\Laravel\Nova\Http\Requests\NovaRequest):bool
+ *
+ * @property TAuthoriseCallback|null $seeCallback
+ *
+ * @method $this canSee(TAuthoriseCallback $callback)
+ */
 class Action implements JsonSerializable
 {
     use AuthorizedToSee,
@@ -101,14 +109,14 @@ class Action implements JsonSerializable
     /**
      * The callback used to authorize running the action.
      *
-     * @var (\Closure(\Laravel\Nova\Http\Requests\NovaRequest, mixed):bool)|null
+     * @var (\Closure(\Laravel\Nova\Http\Requests\NovaRequest, mixed):(bool))|null
      */
     public $runCallback;
 
     /**
      * The callback that should be invoked when the action has completed.
      *
-     * @var (\Closure(\Illuminate\Support\Collection):mixed)|null
+     * @var (\Closure(\Illuminate\Support\Collection):(mixed))|null
      */
     public $thenCallback;
 
@@ -153,6 +161,24 @@ class Action implements JsonSerializable
      * @var string
      */
     public $responseType = 'json';
+
+    /**
+     * The size of the modal. Can be "sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl".
+     *
+     * @var string
+     */
+    public $modalSize = '2xl';
+
+    /**
+     * The style of the modal. Can be either 'fullscreen' or 'window'.
+     *
+     * @var string
+     */
+    public $modalStyle = 'window';
+
+    public const FULLSCREEN_STYLE = 'fullscreen';
+
+    public const WINDOW_STYLE = 'window';
 
     /**
      * Determine if the action is executable for the given request.
@@ -212,7 +238,7 @@ class Action implements JsonSerializable
     /**
      * Return a Inertia visit from the action.
      *
-     * @deprecated
+     * @deprecated Use "visit"
      *
      * @param  string  $path
      * @param  array<string, mixed>  $options
@@ -390,7 +416,11 @@ class Action implements JsonSerializable
      */
     public function validateFields(ActionRequest $request)
     {
-        $fields = collect($this->fields($request));
+        $fields = FieldCollection::make($this->fields($request))
+                    ->authorized($request)
+                    ->applyDependsOn($request)
+                    ->withoutReadonly($request)
+                    ->withoutUnfillable();
 
         return Validator::make(
             $request->all(),
@@ -545,7 +575,7 @@ class Action implements JsonSerializable
     /**
      * Show the action on the table row.
      *
-     * @deprecated
+     * @deprecated Use "showInline"
      *
      * @return $this
      */
@@ -779,6 +809,32 @@ class Action implements JsonSerializable
     }
 
     /**
+     * Set the modal to fullscreen style.
+     *
+     * @return $this
+     */
+    public function fullscreen()
+    {
+        $this->modalStyle = static::FULLSCREEN_STYLE;
+
+        return $this;
+    }
+
+    /**
+     * Set the size of the modal window.
+     *
+     * @param  string  $size
+     * @return $this
+     */
+    public function size($size)
+    {
+        $this->modalStyle = static::WINDOW_STYLE;
+        $this->modalSize = $size;
+
+        return $this;
+    }
+
+    /**
      * Prepare the action for JSON serialization.
      *
      * @return array<string, mixed>
@@ -788,18 +844,25 @@ class Action implements JsonSerializable
         $request = app(NovaRequest::class);
 
         return array_merge([
-            'cancelButtonText' => __($this->cancelButtonText),
+            'cancelButtonText' => Nova::__($this->cancelButtonText),
             'component' => $this->component(),
-            'confirmButtonText' => __($this->confirmButtonText),
-            'confirmText' => __($this->confirmText),
+            'confirmButtonText' => Nova::__($this->confirmButtonText),
+            'confirmText' => Nova::__($this->confirmText),
             'destructive' => $this instanceof DestructiveAction,
             'name' => $this->name(),
             'uriKey' => $this->uriKey(),
-            'fields' => collect($this->fields($request))->filter->authorizedToSee($request)->each->resolveForAction($request)->all(),
+            'fields' => FieldCollection::make($this->fields($request))
+                ->filter->authorizedToSee($request)
+                ->each->resolveForAction($request)
+                ->applyDependsOnWithDefaultValues($request)
+                ->values()
+                ->all(),
             'showOnDetail' => $this->shownOnDetail(),
             'showOnIndex' => $this->shownOnIndex(),
             'showOnTableRow' => $this->shownOnTableRow(),
             'standalone' => $this->isStandalone(),
+            'modalSize' => $this->modalSize,
+            'modalStyle' => $this->modalStyle,
             'responseType' => $this->responseType,
             'withoutConfirmation' => $this->withoutConfirmation,
         ], $this->meta());

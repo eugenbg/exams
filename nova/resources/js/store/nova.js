@@ -7,6 +7,7 @@ export default {
     currentUser: null,
     mainMenu: [],
     userMenu: [],
+    breadcrumbs: [],
     resources: [],
     version: '4.x',
     mainMenuShown: false,
@@ -21,6 +22,7 @@ export default {
     currentVersion: s => s.version,
     mainMenu: s => s.mainMenu,
     userMenu: s => s.userMenu,
+    breadcrumbs: s => s.breadcrumbs,
     mainMenuShown: s => s.mainMenuShown,
     canLeaveForm: s => s.canLeaveForm,
     canLeaveFormToPreviousPage: s => s.canLeaveForm && !s.pushStateWasTriggered,
@@ -121,8 +123,10 @@ export default {
 
       let user = usePage().props.value.currentUser
       let validLicense = usePage().props.value.validLicense
+      let breadcrumbs = usePage().props.value.breadcrumbs
 
       Nova.appConfig = config
+      state.breadcrumbs = breadcrumbs || []
       state.currentUser = user
       state.validLicense = validLicense
       state.resources = resources

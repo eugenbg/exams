@@ -46,7 +46,7 @@ export default {
 
   methods: {
     /**
-     * Handle the clicke event.
+     * Handle the click event.
      */
     handleClick() {
       if (this.isSorted && this.isDescDirection) {

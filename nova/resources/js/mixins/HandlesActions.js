@@ -220,8 +220,11 @@ export default {
           window.open(data.openInNewTab, '_blank')
         })
       } else {
+        let message =
+          data.message || this.__('The action was executed successfully.')
+
         this.emitResponseCallback(() => {
-          Nova.success(this.__('The action ran successfully!'))
+          Nova.success(message)
         })
       }
     },

@@ -19,11 +19,14 @@ use Laravel\Nova\TrashedStatus;
  */
 class MorphToMany extends Field implements DeletableContract, ListableField, PivotableField, RelatableField
 {
-    use Deletable,
+    use AttachableRelation,
+        Deletable,
         DetachesPivotModels,
+        DeterminesIfCreateRelationCanBeShown,
         FormatsRelatableDisplayValues,
         ManyToManyCreationRules,
-        Searchable;
+        Searchable,
+        Collapsable;
 
     /**
      * The field's component.
@@ -202,9 +205,9 @@ class MorphToMany extends Field implements DeletableContract, ListableField, Piv
         $request->first === 'true'
                         ? $query->whereKey($model->newQueryWithoutScopes(), $request->current)
                         : $query->search(
-                                $request, $model->newQuery(), $request->search,
-                                [], [], TrashedStatus::fromBoolean($withTrashed)
-                          );
+                            $request, $model->newQuery(), $request->search,
+                            [], [], TrashedStatus::fromBoolean($withTrashed)
+                        );
 
         return $query->tap(function ($query) use ($request, $model) {
             forward_static_call($this->attachableQueryCallable($request, $model), $request, $query, $this);
@@ -317,9 +320,8 @@ class MorphToMany extends Field implements DeletableContract, ListableField, Piv
      */
     public function asPanel()
     {
-        return Panel::make($this->name)
+        return Panel::make($this->name, [$this])
                     ->withMeta([
-                        'fields' => [$this],
                         'prefixComponent' => true,
                     ])->withComponent('relationship-panel');
     }
@@ -332,15 +334,18 @@ class MorphToMany extends Field implements DeletableContract, ListableField, Piv
     public function jsonSerialize(): array
     {
         return array_merge([
+            'collapsable' => $this->collapsable,
+            'collapsedByDefault' => $this->collapsedByDefault,
             'debounce' => $this->debounce,
             'relatable' => true,
             'morphToManyRelationship' => $this->manyToManyRelationship,
             'relationshipType' => $this->relationshipType(),
-            'perPage'=> $this->resourceClass::$perPageViaRelationship,
+            'perPage' => $this->resourceClass::$perPageViaRelationship,
             'resourceName' => $this->resourceName,
             'searchable' => $this->searchable,
             'withSubtitles' => $this->withSubtitles,
             'singularLabel' => $this->singularLabel ?? $this->resourceClass::singularLabel(),
+            'showCreateRelationButton' => $this->createRelationShouldBeShown(app(NovaRequest::class)),
         ], parent::jsonSerialize());
     }
 }

@@ -2,10 +2,7 @@
   <div class="overflow-hidden overflow-x-auto relative">
     <table
       v-if="resources.length > 0"
-      class="w-full"
-      :class="[`table-${tableStyle}`]"
-      cellpadding="0"
-      cellspacing="0"
+      class="w-full divide-y divide-gray-100 dark:divide-gray-700"
       data-testid="resource-table"
     >
       <ResourceTableHeader
@@ -17,7 +14,7 @@
         @order="requestOrderByChange"
         @reset-order-by="resetOrderBy"
       />
-      <tbody>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
         <ResourceTableRow
           v-for="(resource, index) in resources"
           @actionExecuted="$emit('actionExecuted')"
@@ -39,6 +36,7 @@
           :should-show-column-borders="shouldShowColumnBorders"
           :table-style="tableStyle"
           :update-selection-status="updateSelectionStatus"
+          :click-action="clickAction"
         />
       </tbody>
     </table>
@@ -178,6 +176,10 @@ export default {
 
     tableStyle() {
       return this.resourceInformation.tableStyle
+    },
+
+    clickAction() {
+      return this.resourceInformation.clickAction
     },
   },
 }

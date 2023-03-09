@@ -14,6 +14,7 @@ export default {
       'viaRelationship',
       'resourceName',
       'showHelpText',
+      'mode',
     ]),
     formUniqueId: {
       type: String,
@@ -22,9 +23,11 @@ export default {
 
   data: () => ({ value: '' }),
 
-  mounted() {
+  created() {
     this.setInitialValue()
+  },
 
+  mounted() {
     // Add a default fill method for the field
     this.field.fill = this.fill
 
@@ -83,6 +86,27 @@ export default {
 
   computed: {
     /**
+     * Determine the current field
+     */
+    currentField() {
+      return this.field
+    },
+
+    /**
+     * Determine if the field should use all the available white-space.
+     */
+    fullWidthContent() {
+      return this.currentField.fullWidth || this.field.fullWidth
+    },
+
+    /**
+     * Return the placeholder text for the field.
+     */
+    placeholder() {
+      return this.currentField.placeholder || this.field.name
+    },
+
+    /**
      * Determine if the field is in visible mode
      */
     isVisible() {
@@ -96,6 +120,13 @@ export default {
       return Boolean(
         this.field.readonly || get(this.field, 'extraAttributes.readonly')
       )
+    },
+
+    /**
+     * Determine if the field is accessed from Action
+     */
+    isActionRequest() {
+      return ['action-fullscreen', 'action-modal'].includes(this.mode)
     },
   },
 }

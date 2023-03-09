@@ -1,9 +1,10 @@
 <template>
-  <Checkbox
-    :checked="checked"
-    :disabled="true"
-    class="pointer-events-none"
-    :indeterminate="indeterminate"
+  <span
+    class="fake-checkbox"
+    :class="{
+      'fake-checkbox-checked': checked,
+      'fake-checkbox-indeterminate': indeterminate,
+    }"
   />
 </template>
 

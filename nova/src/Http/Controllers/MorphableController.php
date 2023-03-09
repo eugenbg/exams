@@ -26,7 +26,7 @@ class MorphableController extends Controller
                         ->whereInstanceOf(RelatableField::class)
                         ->findFieldByAttribute($request->field, function () {
                             abort(404);
-                        });
+                        })->applyDependsOn($request);
 
         $withTrashed = $this->shouldIncludeTrashed(
             $request, $relatedResource
@@ -36,6 +36,8 @@ class MorphableController extends Controller
                     ? $relatedResource::$scoutSearchResults
                     : $relatedResource::$relatableSearchResults;
 
+        $shouldReorderAssociatableValues = $field->shouldReorderAssociatableValues($request) && ! $relatedResource::usesScout();
+
         return [
             'resources' => $field->buildMorphableQuery($request, $relatedResource, $withTrashed)
                                 ->take($limit)
@@ -44,7 +46,9 @@ class MorphableController extends Controller
                                 ->filter->authorizedToAdd($request, $request->model())
                                 ->map(function ($resource) use ($request, $field, $relatedResource) {
                                     return $field->formatMorphableResource($request, $resource, $relatedResource);
-                                })->sortBy('display')->values(),
+                                })->when($shouldReorderAssociatableValues, function ($collection) {
+                                    return $collection->sortBy('display');
+                                })->values(),
             'withTrashed' => $withTrashed,
             'softDeletes' => $relatedResource::softDeletes(),
         ];

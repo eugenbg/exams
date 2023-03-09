@@ -3,7 +3,7 @@
     dusk="new-relation-modal"
     :show="show"
     @close-via-escape="handlePreventModalAbandonmentOnClose"
-    maxWidth="screen-md"
+    :size="size"
   >
     <div
       class="bg-gray-100 dark:bg-gray-700 rounded-lg shadow-lg overflow-hidden p-8"
@@ -37,6 +37,7 @@ export default {
 
   props: {
     show: { type: Boolean, default: false },
+    size: { type: String, default: '2xl' },
     resourceName: {},
     resourceId: {},
     viaResource: {},

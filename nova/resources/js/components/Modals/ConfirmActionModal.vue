@@ -6,26 +6,42 @@
     data-testid="confirm-action-modal"
     tabindex="-1"
     role="dialog"
+    :size="action.modalSize"
+    :modal-style="action.modalStyle"
   >
     <form
       ref="theForm"
       autocomplete="off"
       @change="onUpdateFormStatus"
       @submit.prevent.stop="$emit('confirm')"
-      class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+      :data-form-unique-id="formUniqueId"
+      class="bg-white dark:bg-gray-800"
+      :class="{
+        'rounded-lg shadow-lg overflow-hidden space-y-6':
+          action.modalStyle === 'window',
+        'flex flex-col justify-between h-full':
+          action.modalStyle === 'fullscreen',
+      }"
     >
-      <div>
+      <div
+        class="space-y-6"
+        :class="{
+          'overflow-hidden overflow-y-auto': action.modalStyle === 'fullscreen',
+        }"
+      >
         <ModalHeader v-text="action.name" />
 
-        <p v-if="action.fields.length == 0" class="px-8 my-8">
+        <!-- Confirmation Text -->
+        <p
+          v-if="action.confirmText"
+          class="px-8"
+          :class="{ 'text-red-500': action.destructive }"
+        >
           {{ action.confirmText }}
         </p>
 
-        <div v-else>
-          <!-- Validation Errors -->
-          <validation-errors :errors="errors" />
-
-          <!-- Action Fields -->
+        <!-- Action Fields -->
+        <div v-if="action.fields.length > 0">
           <div
             class="action"
             v-for="field in action.fields"
@@ -36,7 +52,14 @@
               :errors="errors"
               :resource-name="resourceName"
               :field="field"
-              :show-help-text="field.helpText != null"
+              :show-help-text="true"
+              :form-unique-id="formUniqueId"
+              :mode="
+                action.modalStyle === 'fullscreen'
+                  ? 'action-fullscreen'
+                  : 'action-modal'
+              "
+              :sync-endpoint="syncEndpoint"
               @field-changed="onUpdateFormStatus"
             />
           </div>
@@ -51,7 +74,9 @@
             dusk="cancel-action-button"
             class="ml-auto mr-3"
             @click="$emit('close')"
-          />
+          >
+            {{ action.cancelButtonText }}
+          </CancelButton>
 
           <LoadingButton
             type="submit"
@@ -71,6 +96,7 @@
 
 <script>
 import { PreventsModalAbandonment } from '@/mixins'
+import { uid } from 'uid/single'
 
 export default {
   emits: ['confirm', 'close'],
@@ -78,13 +104,18 @@ export default {
   mixins: [PreventsModalAbandonment],
 
   props: {
+    action: { type: Object, required: true },
+    endpoint: { type: String, required: false },
+    errors: { type: Object, required: true },
+    resourceName: { type: String, required: true },
+    selectedResources: { type: [Array, String], required: true },
     show: { type: Boolean, default: false },
     working: Boolean,
-    resourceName: { type: String, required: true },
-    action: { type: Object, required: true },
-    selectedResources: { type: [Array, String], required: true },
-    errors: { type: Object, required: true },
   },
+
+  data: () => ({
+    formUniqueId: uid(),
+  }),
 
   created() {
     document.addEventListener('keydown', this.handleKeydown)
@@ -131,6 +162,26 @@ export default {
         () => {
           e.stopPropagation()
         }
+      )
+    },
+  },
+
+  computed: {
+    syncEndpoint() {
+      let searchParams = new URLSearchParams({ action: this.action.uriKey })
+
+      if (this.selectedResources === 'all') {
+        searchParams.append('resources', 'all')
+      } else {
+        this.selectedResources.forEach(resourceId => {
+          searchParams.append('resources[]', resourceId)
+        })
+      }
+
+      return (
+        (this.endpoint || `/nova-api/${this.resourceName}/action`) +
+        '?' +
+        searchParams.toString()
       )
     },
   },

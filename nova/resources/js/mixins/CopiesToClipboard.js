@@ -1,4 +1,4 @@
-export default {
+const mixin = {
   methods: {
     copyValueToClipboard(value) {
       if (navigator.clipboard) {
@@ -23,3 +23,11 @@ export default {
     },
   },
 }
+
+export function useCopyValueToClipboard() {
+  return {
+    copyValueToClipboard: value => mixin.methods.copyValueToClipboard(value),
+  }
+}
+
+export default mixin

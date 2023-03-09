@@ -4,10 +4,14 @@ import isNil from 'lodash/isNil'
 export function setupAxios() {
   const instance = axios.create()
 
+  instance.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+  instance.defaults.headers.common['X-CSRF-TOKEN'] =
+    document.head.querySelector('meta[name="csrf-token"]').content
+
   instance.interceptors.response.use(
     response => response,
     error => {
-      if (error instanceof axios.Cancel) {
+      if (axios.isCancel(error)) {
         return Promise.reject(error)
       }
 

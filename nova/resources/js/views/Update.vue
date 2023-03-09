@@ -39,6 +39,7 @@
           :via-resource="viaResource"
           :via-resource-id="viaResourceId"
           :via-relationship="viaRelationship"
+          :show-help-text="true"
         />
       </div>
 
@@ -55,6 +56,7 @@
 
         <LoadingButton
           dusk="update-and-continue-editing-button"
+          type="button"
           @click="submitViaUpdateResourceAndContinueEditing"
           :disabled="isWorking"
           align="center"

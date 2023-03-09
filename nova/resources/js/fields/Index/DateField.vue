@@ -1,7 +1,7 @@
 <template>
   <div>
     <div :class="`text-${field.textAlign}`">
-      <span v-if="field.value" class="whitespace-nowrap">
+      <span v-if="fieldHasValue" class="whitespace-nowrap">
         {{ formattedDate }}
       </span>
       <span v-else>&mdash;</span>
@@ -11,8 +11,11 @@
 
 <script>
 import { DateTime } from 'luxon'
+import { FieldValue } from '@/mixins'
 
 export default {
+  mixins: [FieldValue],
+
   props: ['resourceName', 'field'],
 
   computed: {
@@ -22,7 +25,7 @@ export default {
 
     formattedDate() {
       if (this.field.usesCustomizedDisplay) {
-        return this.field.value
+        return this.field.displayedAs
       }
 
       return DateTime.fromISO(this.field.value, {

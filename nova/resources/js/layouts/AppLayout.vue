@@ -5,12 +5,14 @@
     <!-- Content -->
     <div data-testid="content">
       <div
-        class="hidden lg:block lg:absolute left-0 bottom-0 lg:top-[56px] lg:bottom-auto w-60 px-3 py-5"
+        class="hidden lg:block lg:absolute left-0 bottom-0 lg:top-[56px] lg:bottom-auto w-60 px-3 py-8"
       >
         <MainMenu />
       </div>
 
-      <div class="p-4 md:py-8 md:px-12 lg:ml-60">
+      <div class="p-4 md:py-8 md:px-12 lg:ml-60 space-y-8">
+        <Breadcrumbs v-if="breadcrumbsEnabled" />
+
         <FadeTransition>
           <slot />
         </FadeTransition>
@@ -60,6 +62,12 @@ export default {
       setTimeout(() => {
         Nova.redirectToLogin()
       }, 5000)
+    },
+  },
+
+  computed: {
+    breadcrumbsEnabled() {
+      return Nova.config('breadcrumbsEnabled')
     },
   },
 }

@@ -27,14 +27,13 @@ class UpdateFieldController extends Controller
      */
     public function sync(ResourceUpdateOrUpdateAttachedRequest $request)
     {
-        UpdateViewResource::make()->newResourceWith($request);
+        $resource = UpdateViewResource::make()->newResourceWith($request);
 
         return response()->json(
-            $request->newResource()
-                ->updateFields($request)
+            $resource->updateFields($request)
                 ->filter(function ($field) use ($request) {
                     return $request->query('field') === $field->attribute &&
-                            $request->query('component') === $field->component;
+                            $request->query('component') === $field->dependentComponentKey();
                 })->each->syncDependsOn($request)
                 ->first()
         );

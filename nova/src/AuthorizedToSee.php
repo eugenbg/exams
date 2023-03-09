@@ -10,7 +10,7 @@ trait AuthorizedToSee
     /**
      * The callback used to authorize viewing the filter or action.
      *
-     * @var (\Closure(\Illuminate\Http\Request):bool)|null
+     * @var (\Closure(\Illuminate\Http\Request):(bool))|null
      */
     public $seeCallback;
 

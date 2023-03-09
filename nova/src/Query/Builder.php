@@ -89,8 +89,8 @@ class Builder implements QueryBuilder
      * @return $this
      */
     public function search(NovaRequest $request, $query, $search = null,
-                                      array $filters = [], array $orderings = [],
-                                      $withTrashed = TrashedStatus::DEFAULT)
+        array $filters = [], array $orderings = [],
+        $withTrashed = TrashedStatus::DEFAULT)
     {
         $this->setOriginalQueryBuilder($query);
 
@@ -227,6 +227,7 @@ class Builder implements QueryBuilder
             ];
         }
 
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $scoutPaginated */
         $scoutPaginated = $queryBuilder->paginate($perPage);
 
         $items = $scoutPaginated->items();

@@ -1,15 +1,15 @@
 <template>
-  <div v-if="shouldShow && hasContent">
+  <div v-if="shouldShow && hasContent" class="break-normal">
     <div
-      class="markdown leading-normal"
+      class="prose prose-sm dark:prose-invert"
       :class="{ 'whitespace-pre-wrap': plainText }"
       v-html="content"
     />
   </div>
-  <div v-else-if="hasContent">
+  <div v-else-if="hasContent" class="break-normal">
     <div
       v-if="expanded"
-      class="markdown leading-normal"
+      class="prose prose-sm dark:prose-invert"
       :class="{ 'whitespace-pre-wrap': plainText }"
       v-html="content"
     />

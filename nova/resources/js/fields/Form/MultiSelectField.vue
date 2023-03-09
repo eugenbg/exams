@@ -3,6 +3,7 @@
     :field="currentField"
     :errors="errors"
     :show-help-text="showHelpText"
+    :full-width-content="fullWidthContent"
   >
     <template #field>
       <!-- Select Input Field -->
@@ -14,7 +15,7 @@
         class="w-full"
         :class="errorClasses"
         :options="currentField.options"
-        :disabled="isReadonly"
+        :disabled="currentlyIsReadonly"
       >
         <option value="" :selected="!hasValue" :disabled="!field.nullable">
           {{ placeholder }}

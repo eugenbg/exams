@@ -51,6 +51,13 @@ abstract class Lens implements ArrayAccess, JsonSerializable, UrlRoutable
     public $resource;
 
     /**
+     * The columns that should be searched.
+     *
+     * @var array
+     */
+    public static $search = [];
+
+    /**
      * Execute the query for the lens.
      *
      * @param  \Laravel\Nova\Http\Requests\LensRequest  $request
@@ -144,7 +151,7 @@ abstract class Lens implements ArrayAccess, JsonSerializable, UrlRoutable
      * Resolve the filterable fields.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
-     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field>
+     * @return \Laravel\Nova\Fields\FieldCollection<int, \Laravel\Nova\Fields\Field&\Laravel\Nova\Contracts\FilterableField>
      */
     public function filterableFields(NovaRequest $request)
     {
@@ -162,6 +169,26 @@ abstract class Lens implements ArrayAccess, JsonSerializable, UrlRoutable
     public function availableFields(NovaRequest $request)
     {
         return new FieldCollection(array_values($this->filter($this->fields($request))));
+    }
+
+    /**
+     * Determine if this resource is searchable.
+     *
+     * @return bool
+     */
+    public static function searchable()
+    {
+        return ! empty(static::searchableColumns());
+    }
+
+    /**
+     * Get the searchable columns for the lens.
+     *
+     * @return array
+     */
+    public static function searchableColumns()
+    {
+        return static::$search;
     }
 
     /**

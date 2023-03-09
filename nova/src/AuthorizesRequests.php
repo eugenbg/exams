@@ -7,7 +7,7 @@ trait AuthorizesRequests
     /**
      * The callback that should be used to authenticate Nova users.
      *
-     * @var (\Closure(\Illuminate\Http\Request):bool)|null
+     * @var (\Closure(\Illuminate\Http\Request):(bool))|null
      */
     public static $authUsing;
 

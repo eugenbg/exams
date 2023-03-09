@@ -23,7 +23,10 @@
       />
     </slot>
 
-    <Card class="mt-3 py-2 px-6" v-if="!collapsed && fields.length > 0">
+    <Card
+      class="mt-3 py-2 px-6 divide-y divide-gray-100 dark:divide-gray-700"
+      v-if="!collapsed && fields.length > 0"
+    >
       <component
         :key="index"
         v-for="(field, index) in fields"
@@ -79,6 +82,10 @@ export default {
   computed: {
     localStorageKey() {
       return `nova.panels.${this.panel.name}.collapsed`
+    },
+
+    collapsedByDefault() {
+      return this.panel?.collapsedByDefault ?? false
     },
 
     /**

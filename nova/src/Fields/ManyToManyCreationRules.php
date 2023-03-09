@@ -12,7 +12,7 @@ trait ManyToManyCreationRules
     /**
      * The callback that should be used to set creation rules callback for the pivot actions.
      *
-     * @var (callable(\Laravel\Nova\Http\Requests\NovaRequest):array)|null
+     * @var (callable(\Laravel\Nova\Http\Requests\NovaRequest):(array))|null
      */
     public $creationRulesCallback;
 
@@ -26,7 +26,7 @@ trait ManyToManyCreationRules
     /**
      * Set creation rules callback for this relation.
      *
-     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest):array)|null  $callback
+     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest):(array))|null  $callback
      * @return $this
      */
     public function creationRules($callback = null)

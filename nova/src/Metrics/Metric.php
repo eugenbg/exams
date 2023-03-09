@@ -43,11 +43,7 @@ abstract class Metric extends Card
      */
     public function resolve(NovaRequest $request)
     {
-        $resolver = function () use ($request) {
-            return $this->onlyOnDetail
-                ? $this->calculate($request, $request->findModelOrFail())
-                : $this->calculate($request);
-        };
+        $resolver = $this->getResolver($request);
 
         if ($cacheFor = $this->cacheFor()) {
             $cacheFor = is_numeric($cacheFor) ? new DateInterval(sprintf('PT%dS', $cacheFor * 60)) : $cacheFor;
@@ -63,12 +59,27 @@ abstract class Metric extends Card
     }
 
     /**
+     * Return a resolver function for the metric.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @return \Closure(): mixed
+     */
+    public function getResolver(NovaRequest $request)
+    {
+        return function () use ($request) {
+            return $this->onlyOnDetail
+                ? $this->calculate($request, $request->findModelOrFail())
+                : $this->calculate($request);
+        };
+    }
+
+    /**
      * Get the appropriate cache key for the metric.
      *
      * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
      * @return string
      */
-    protected function getCacheKey(NovaRequest $request)
+    public function getCacheKey(NovaRequest $request)
     {
         return sprintf(
             'nova.metric.%s.%s.%s.%s.%s.%s',

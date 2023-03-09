@@ -2,6 +2,7 @@
 
 namespace Laravel\Nova\Http\Resources;
 
+use Laravel\Nova\Dashboards\Main;
 use Laravel\Nova\Http\Requests\DashboardRequest;
 use Laravel\Nova\Nova;
 
@@ -38,6 +39,8 @@ class DashboardViewResource extends Resource
         return [
             'label' => $dashboard->label(),
             'cards' => $request->availableCards($this->name),
+            'showRefreshButton' => $dashboard->showRefreshButton,
+            'isHelpCard' => $dashboard instanceof Main,
         ];
     }
 

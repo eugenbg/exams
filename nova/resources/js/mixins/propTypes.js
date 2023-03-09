@@ -58,6 +58,19 @@ const propTypes = {
     type: Boolean,
     default: false,
   },
+
+  clickAction: {
+    type: String,
+    default: 'view',
+    validator: val => ['edit', 'select', 'ignore', 'detail'].includes(val),
+  },
+
+  mode: {
+    type: String,
+    default: 'form',
+    validator: v =>
+      ['form', 'modal', 'action-modal', 'action-fullscreen'].includes(v),
+  },
 }
 
 export function mapProps(attributes) {

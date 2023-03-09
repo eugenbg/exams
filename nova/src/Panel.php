@@ -2,19 +2,32 @@
 
 namespace Laravel\Nova;
 
+use Illuminate\Http\Resources\ConditionallyLoadsAttributes;
 use Illuminate\Http\Resources\MergeValue;
+use Illuminate\Http\Resources\MissingValue;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\Macroable;
 use JsonSerializable;
 use Laravel\Nova\Contracts\RelatableField;
+use Laravel\Nova\Fields\Collapsable;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Metrics\HasHelpText;
 
 /**
+ * @phpstan-type TFields \Laravel\Nova\Fields\Field|\Laravel\Nova\ResourceToolElement|\Illuminate\Http\Resources\MergeValue|\Illuminate\Http\Resources\MissingValue
+ * @phpstan-type TPanelFields array<int, TFields>|iterable<int, TFields>
+ *
  * @method static static make(string $name, \Closure|array|iterable $fields = [])
  */
+#[\AllowDynamicProperties]
 class Panel extends MergeValue implements JsonSerializable
 {
-    use Macroable, Metable, Makeable, HasHelpText;
+    use ConditionallyLoadsAttributes;
+    use Macroable;
+    use Metable;
+    use Makeable;
+    use HasHelpText;
+    use Collapsable;
 
     /**
      * The name of the panel.
@@ -26,7 +39,7 @@ class Panel extends MergeValue implements JsonSerializable
     /**
      * The panel fields.
      *
-     * @var array
+     * @var array<int, \Laravel\Nova\Fields\Field>
      */
     public $data;
 
@@ -59,17 +72,10 @@ class Panel extends MergeValue implements JsonSerializable
     public $helpText;
 
     /**
-     * Indicates if the panel is collapsable.
-     *
-     * @var bool
-     */
-    public $collapsable = false;
-
-    /**
      * Create a new panel instance.
      *
      * @param  string  $name
-     * @param  (\Closure():array|iterable)|array  $fields
+     * @param  (\Closure():(TPanelFields))|TPanelFields  $fields
      * @return void
      */
     public function __construct($name, $fields = [])
@@ -105,15 +111,22 @@ class Panel extends MergeValue implements JsonSerializable
     /**
      * Prepare the given fields.
      *
-     * @param  (\Closure():array|iterable)|array|iterable  $fields
-     * @return array
+     * @param  (\Closure():(TPanelFields))|TPanelFields  $fields
+     * @return array<int, \Laravel\Nova\Fields\Field>
      */
     protected function prepareFields($fields)
     {
-        return collect(is_callable($fields) ? $fields() : $fields)->each(function ($field) {
-            $field->assignedPanel = $this;
-            $field->panel = $this->name;
-        })->all();
+        $fields = is_callable($fields) ? $fields() : $fields;
+
+        return collect($this->filter($fields instanceof Collection ? $fields->all() : $fields))
+            ->reject(function ($field) {
+                return $field instanceof MissingValue;
+            })
+            ->values()
+            ->each(function ($field) {
+                $field->assignedPanel = $this;
+                $field->panel = $this->name;
+            })->all();
     }
 
     /**
@@ -226,28 +239,6 @@ class Panel extends MergeValue implements JsonSerializable
     }
 
     /**
-     * Set the panel as collapsable.
-     *
-     * @return $this
-     */
-    public function collapsable()
-    {
-        $this->collapsable = true;
-
-        return $this;
-    }
-
-    /**
-     * Set the panel as collapsable.
-     *
-     * @return $this
-     */
-    public function collapsible()
-    {
-        return $this->collapsable();
-    }
-
-    /**
      * Set the width for the help text tooltip.
      *
      * @param  string  $helpWidth
@@ -281,6 +272,7 @@ class Panel extends MergeValue implements JsonSerializable
     {
         return array_merge([
             'collapsable' => $this->collapsable,
+            'collapsedByDefault' => $this->collapsedByDefault,
             'component' => $this->component(),
             'name' => $this->name,
             'showToolbar' => $this->showToolbar,

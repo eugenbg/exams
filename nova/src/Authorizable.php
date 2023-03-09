@@ -392,7 +392,9 @@ trait Authorizable
      */
     public function authorizeTo(Request $request, $ability)
     {
-        throw_unless($this->authorizedTo($request, $ability), AuthorizationException::class);
+        if (static::authorizable()) {
+            Gate::forUser(Nova::user($request))->authorize($ability, $this->resource);
+        }
     }
 
     /**

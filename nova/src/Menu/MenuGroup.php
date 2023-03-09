@@ -3,6 +3,8 @@
 namespace Laravel\Nova\Menu;
 
 use Illuminate\Support\Traits\Macroable;
+use Laravel\Nova\AuthorizedToSee;
+use Laravel\Nova\Fields\Collapsable;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Makeable;
 
@@ -11,8 +13,10 @@ use Laravel\Nova\Makeable;
  */
 class MenuGroup implements \JsonSerializable
 {
+    use AuthorizedToSee;
     use Makeable;
     use Macroable;
+    use Collapsable;
 
     /**
      * The menu's component.
@@ -31,16 +35,9 @@ class MenuGroup implements \JsonSerializable
     /**
      * The menu's items.
      *
-     * @var \Illuminate\Support\Collection
+     * @var \Laravel\Nova\Menu\MenuCollection
      */
     public $items;
-
-    /**
-     * The menu's collapsable state.
-     *
-     * @var bool
-     */
-    public $collapsable = false;
 
     /**
      * Construct a new Menu Group instance.
@@ -51,29 +48,7 @@ class MenuGroup implements \JsonSerializable
     public function __construct($name, $items = [])
     {
         $this->name = $name;
-        $this->items = collect($items);
-    }
-
-    /**
-     * Set the menu group as collapsable.
-     *
-     * @return $this
-     */
-    public function collapsable()
-    {
-        $this->collapsable = true;
-
-        return $this;
-    }
-
-    /**
-     * Set the menu group as collapsable.
-     *
-     * @return $this
-     */
-    public function collapsible()
-    {
-        return $this->collapsable();
+        $this->items = new MenuCollection($items);
     }
 
     /**
@@ -100,10 +75,9 @@ class MenuGroup implements \JsonSerializable
         return [
             'component' => $this->component,
             'name' => $this->name,
-            'items' => $this->items->reject(function ($item) use ($request) {
-                return method_exists($item, 'authorizedToSee') && ! $item->authorizedToSee($request);
-            })->values(),
+            'items' => $this->items->authorized($request)->withoutEmptyItems()->all(),
             'collapsable' => $this->collapsable,
+            'collapsedByDefault' => $this->collapsedByDefault,
             'key' => $this->key(),
         ];
     }

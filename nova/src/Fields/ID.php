@@ -2,6 +2,7 @@
 
 namespace Laravel\Nova\Fields;
 
+use Illuminate\Database\Eloquent\Model;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Util;
 
@@ -29,7 +30,7 @@ class ID extends Field
      *
      * @param  string|null  $name
      * @param  string|null  $attribute
-     * @param  (callable(mixed, mixed, ?string):mixed)|null  $resolveCallback
+     * @param  (callable(mixed, mixed, ?string):(mixed))|null  $resolveCallback
      * @return void
      */
     public function __construct($name = null, $attribute = null, $resolveCallback = null)
@@ -41,12 +42,13 @@ class ID extends Field
      * Create a new, resolved ID field for the given resource.
      *
      * @param  \Laravel\Nova\Resource  $resource
-     * @return static
+     * @return static|null
      */
     public static function forResource($resource)
     {
         $model = $resource->model();
 
+        /** @var static|null $field */
         $field = transform(
             $resource->availableFieldsOnIndexOrDetail(app(NovaRequest::class))
                     ->whereInstanceOf(self::class)
@@ -59,7 +61,11 @@ class ID extends Field
             }
         );
 
-        return empty($field->value) && $field->nullable !== true ? null : $field;
+        if ($field instanceof static) {
+            return empty($field->value) && $field->nullable !== true ? null : $field;
+        }
+
+        return null;
     }
 
     /**
@@ -90,8 +96,12 @@ class ID extends Field
      */
     protected function resolveAttribute($resource, $attribute)
     {
-        if (! is_null($resource)) {
-            $pivotValue = isset($resource->pivot) ? optional($resource->pivot)->getKey() : null;
+        if ($resource instanceof Model) {
+            $pivotAccessor = $this->pivotAccessor ?? 'pivot';
+
+            $pivotValue = $resource->relationLoaded($pivotAccessor)
+                ? optional($resource->{$pivotAccessor})->getKey()
+                : null;
 
             if (is_int($pivotValue) || is_string($pivotValue)) {
                 $this->pivotValue = $pivotValue;

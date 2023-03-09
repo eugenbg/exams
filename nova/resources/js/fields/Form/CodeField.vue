@@ -2,7 +2,7 @@
   <DefaultField
     :field="currentField"
     :errors="errors"
-    :full-width-content="true"
+    :full-width-content="fullWidthContent"
     :show-help-text="showHelpText"
   >
     <template #field>
@@ -74,6 +74,12 @@ export default {
 
     handleHidingComponent() {
       this.codemirror = null
+    },
+
+    onSyncedField() {
+      if (this.codemirror) {
+        this.codemirror.getDoc().setValue(this.currentField.value)
+      }
     },
   },
 }

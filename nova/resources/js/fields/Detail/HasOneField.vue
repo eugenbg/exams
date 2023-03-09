@@ -31,6 +31,7 @@
         :via-resource-id="viaResourceId"
         :via-relationship="viaRelationship"
         :relationship-type="field.relationshipType"
+        :show-view-link="true"
       />
     </div>
   </div>

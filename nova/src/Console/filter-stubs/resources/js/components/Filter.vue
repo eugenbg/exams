@@ -4,7 +4,7 @@
 
     <template #filter>
       <SelectControl
-        :dusk="`${filter.name}-select-filter"
+        :dusk="`${filter.name}-select-filter`"
         label="label"
         class="w-full block"
         size="sm"

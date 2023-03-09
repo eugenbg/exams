@@ -23,7 +23,7 @@
           {{ item.name }}
 
           <span v-if="item.badge" class="mx-2 absolute right-3">
-            <Badge :extra-classes="item.badge.typeClass" class="">
+            <Badge :extra-classes="item.badge.typeClass">
               {{ item.badge.value }}
             </Badge>
           </span>
@@ -52,7 +52,7 @@
         </span>
 
         <span v-if="item.badge" class="mx-2 absolute right-8">
-          <Badge :extra-classes="item.badge.typeClass" class="">
+          <Badge :extra-classes="item.badge.typeClass">
             {{ item.badge.value }}
           </Badge>
         </span>
@@ -109,6 +109,12 @@ export default {
     },
   },
 
-  computed: mapGetters(['mainMenuShown']),
+  computed: {
+    ...mapGetters(['mainMenuShown']),
+
+    collapsedByDefault() {
+      return this.item?.collapsedByDefault ?? false
+    },
+  },
 }
 </script>

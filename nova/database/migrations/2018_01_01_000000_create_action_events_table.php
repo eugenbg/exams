@@ -26,6 +26,8 @@ class CreateActionEventsTable extends Migration
 
             if (Builder::$defaultMorphKeyType === 'uuid') {
                 $table->uuid('model_id')->nullable();
+            } elseif (Builder::$defaultMorphKeyType === 'ulid') {
+                $table->ulid('model_id')->nullable();
             } else {
                 $table->unsignedBigInteger('model_id')->nullable();
             }

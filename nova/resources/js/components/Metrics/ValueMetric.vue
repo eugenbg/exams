@@ -2,6 +2,7 @@
   <BaseValueMetric
     @selected="handleRangeSelected"
     :title="card.name"
+    :copyable="copyable"
     :help-text="card.helpText"
     :help-width="card.helpWidth"
     :icon="card.icon"
@@ -9,6 +10,7 @@
     :value="value"
     :ranges="card.ranges"
     :format="format"
+    :tooltip-format="tooltipFormat"
     :prefix="prefix"
     :suffix="suffix"
     :suffix-inflection="suffixInflection"
@@ -51,7 +53,9 @@ export default {
 
   data: () => ({
     loading: true,
+    copyable: false,
     format: '(0[.]00a)',
+    tooltipFormat: '(0[.]00)',
     value: 0,
     previous: 0,
     prefix: '',
@@ -101,18 +105,22 @@ export default {
         ({
           data: {
             value: {
+              copyable,
               value,
               previous,
               prefix,
               suffix,
               suffixInflection,
               format,
+              tooltipFormat,
               zeroResult,
             },
           },
         }) => {
+          this.copyable = copyable
           this.value = value
           this.format = format || this.format
+          this.tooltipFormat = tooltipFormat || this.tooltipFormat
           this.prefix = prefix || this.prefix
           this.suffix = suffix || this.suffix
           this.suffixInflection = suffixInflection

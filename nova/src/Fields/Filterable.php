@@ -10,14 +10,14 @@ trait Filterable
     /**
      * The callback used to determine if the field is filterable.
      *
-     * @var (callable(\Laravel\Nova\Http\Requests\NovaRequest, \Illuminate\Database\Eloquent\Builder, mixed, string):void)|null
+     * @var (callable(\Laravel\Nova\Http\Requests\NovaRequest, \Illuminate\Database\Eloquent\Builder, mixed, string):(void))|null
      */
     public $filterableCallback;
 
     /**
      * The callback used to determine if the field is filterable.
      *
-     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, \Illuminate\Database\Eloquent\Builder, mixed, string):void)|null  $filterableCallback
+     * @param  (callable(\Laravel\Nova\Http\Requests\NovaRequest, \Illuminate\Database\Eloquent\Builder, mixed, string):(void))|null  $filterableCallback
      * @return $this
      */
     public function filterable(callable $filterableCallback = null)

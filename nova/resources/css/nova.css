@@ -1,3 +1,15 @@
+.visually-hidden {
+  position: absolute !important;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip: rect(1px, 1px, 1px, 1px);
+}
+
+.visually-hidden:is(:focus, :focus-within) + label {
+  outline: thin dotted;
+}
+
 @layer base {
   button:disabled,
   button[disabled] {
@@ -5,197 +17,10 @@
   }
 }
 
-/* Markdown Field
----------------------------------------------------------------------------- */
-.remove-last-margin-bottom :last-child {
-  margin-bottom: 0;
-}
-
-.markdown h1,
-.markdown h2,
-.markdown h3,
-.markdown h4,
-.markdown h5,
-.markdown h6 {
-  @apply text-gray-500;
-  font-weight: 600;
-  margin-bottom: 20px;
-}
-
-.markdown h1 {
-  @apply text-gray-500;
-  @apply text-2xl;
-}
-
-.markdown h2 {
-  @apply text-xl;
-  font-weight: 400;
-}
-
-.markdown h3,
-.markdown h4,
-.markdown h5,
-.markdown h6 {
-  @apply text-lg;
-}
-
-.markdown p {
-  @apply text-base text-gray-500 dark:text-gray-400 leading-normal mb-6;
-}
-
-.markdown blockquote {
-  background-color: #f5f5f5;
-  padding: 5px 15px;
-  border-radius: 4px;
-  margin-top: 10px;
-  @apply mb-4;
-}
-
-.markdown blockquote > p {
-  @apply text-base;
-  margin-top: 10px;
-  @apply mb-4;
-}
-
-.markdown blockquote p code {
-  background-color: #e5e5e5;
-}
-
-.markdown ul,
-.markdown ol {
-  margin: 20px 0 20px;
-}
-
-.markdown ul ul,
-.markdown ol ul,
-.markdown ol ul,
-.markdown ol ol {
-  margin: 0 0 0 15px;
-}
-
-.markdown ul {
-  list-style: disc inside;
-}
-
-.markdown ol {
-  list-style: decimal inside;
-}
-
-.markdown li {
-  @apply text-base text-gray-500 dark:text-gray-400;
-  line-height: 1.7;
-}
-
-.markdown a {
-  @apply text-primary-500;
-}
-
-.markdown table {
-  @apply w-full mb-6;
-}
-
-.markdown table thead {
-}
-
-.markdown table thead th {
-  @apply text-left text-base border-b border-gray-200 dark:border-gray-700 py-1;
-}
-
-.markdown table tbody {
-}
-
-.markdown table tbody td {
-  @apply text-left text-base border-b border-gray-200 dark:border-gray-700 py-2;
-}
-
-.markdown pre {
-  margin-top: 20px;
-  margin-bottom: 20px;
-  overflow: auto;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.markdown pre > code {
-  font-family: Menlo, monospace, fixed;
-  font-size: 14px;
-  background-color: transparent;
-  color: #555;
-  line-height: 1.5;
-  word-break: normal;
-  word-spacing: normal;
-  white-space: pre;
-  hyphens: none;
-  direction: ltr;
-  tab-size: 4;
-
-  padding: 0 1rem;
-}
-
-.markdown code {
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 0.3rem 0.5rem;
-  font-size: 14px;
-  border-radius: 3px;
-  font-family: Menlo, monospace, fixed;
-}
-
-/* Markdown Preview Field
----------------------------------------------------------------------------- */
-.markdown-preview {
-  @apply font-mono text-gray-500 text-sm !important;
-}
-
-.markdown-preview h1,
-.markdown-preview h2,
-.markdown-preview h3,
-.markdown-preview h4,
-.markdown-preview h5,
-.markdown-preview h6 {
-  @apply font-mono text-sm mb-3 !important;
-}
-
-.markdown-preview p {
-  @apply mb-4 leading-normal;
-}
-
-.markdown-preview blockquote {
-  @apply mb-4;
-}
-
-.markdown-preview blockquote > p {
-  margin-top: 10px;
-  @apply mb-4;
-}
-
-.markdown-preview ul,
-.markdown-preview ol {
-  margin: 20px 0 20px;
-}
-
-.markdown-preview ul {
-  list-style: disc inside;
-}
-
-.markdown-preview ol {
-  list-style: decimal inside;
-}
-
-.markdown-preview pre {
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
 /* Sidebar Menus
 ---------------------------------------------------------------------------- */
 .sidebar-section-title {
-  @apply rounded flex items-center no-underline font-normal text-gray-500 dark:text-gray-500 text-base px-2 py-1;
+  @apply rounded flex items-center no-underline font-normal text-gray-500 dark:text-gray-500 text-base text-left px-2 py-1;
   @apply focus:outline-none focus:ring focus:ring-primary-200;
   @apply dark:focus:ring-gray-600;
 }
@@ -241,7 +66,7 @@ button.sidebar-section-title {
 }
 
 .sidebar-group-title {
-  @apply no-underline flex items-center flex-1 tracking-wide uppercase font-bold text-xs px-2 py-1;
+  @apply no-underline flex items-center flex-1 tracking-wide uppercase font-bold text-left text-xs px-2 py-1;
 }
 
 .sidebar-item-title {
@@ -265,6 +90,16 @@ button.sidebar-section-title {
 
 /* Checkbox
 ---------------------------------------------------------------------------- */
+.fake-checkbox {
+  @apply select-none flex-shrink-0 h-4 w-4 text-primary-500 bg-white dark:bg-gray-900 rounded;
+  display: inline-block;
+  vertical-align: middle;
+  background-origin: border-box;
+
+  @apply border border-gray-300;
+  @apply dark:border-gray-700;
+}
+
 .checkbox {
   @apply appearance-none inline-block align-middle select-none flex-shrink-0 h-4 w-4 text-primary-500 bg-white dark:bg-gray-900 rounded;
   -webkit-print-color-adjust: exact;
@@ -282,8 +117,9 @@ button.sidebar-section-title {
   @apply outline-none ring-primary-200 ring-2 dark:ring-gray-700;
 }
 
+.fake-checkbox-checked,
 .checkbox:checked {
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M5.707 7.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0-1.414-1.414L7 8.586 5.707 7.293z'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M0 0h16v16H0z'/%3E%3Cpath fill='%23FFF' fill-rule='nonzero' d='M5.695 7.28A1 1 0 0 0 4.28 8.696l2 2a1 1 0 0 0 1.414 0l4-4A1 1 0 0 0 10.28 5.28L6.988 8.574 5.695 7.28Z'/%3E%3C/g%3E%3C/svg%3E");
   border-color: transparent;
   background-color: currentColor;
   background-size: cover;
@@ -291,9 +127,9 @@ button.sidebar-section-title {
   background-repeat: no-repeat;
 }
 
-.checkbox-indeterminate,
+.fake-checkbox-indeterminate,
 .checkbox:indeterminate {
-  background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg width='16px' height='16px' viewBox='0 0 16 16' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Ctitle%3Echeckbox-indeterminate%3C/title%3E%3Cg id='checkbox-indeterminate' stroke='none' stroke-width='1' fill='none' fill-rule='evenodd'%3E%3Cpath d='M8,4 C8.51283584,4 8.93550716,4.38604019 8.99327227,4.88337887 L9,5 L9,11 C9,11.5522847 8.55228475,12 8,12 C7.48716416,12 7.06449284,11.6139598 7.00672773,11.1166211 L7,11 L7,5 C7,4.44771525 7.44771525,4 8,4 Z' id='Path-2' fill='%23FFFFFF' fill-rule='nonzero' transform='translate(8.000000, 8.000000) rotate(90.000000) translate(-8.000000, -8.000000) '%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M0 0h16v16H0z'/%3E%3Cpath fill='%23FFF' fill-rule='nonzero' d='M12 8a1 1 0 0 1-.883.993L11 9H5a1 1 0 0 1-.117-1.993L5 7h6a1 1 0 0 1 1 1Z'/%3E%3C/g%3E%3C/svg%3E");
   border-color: transparent;
   background-color: currentColor;
   background-size: cover;
@@ -301,21 +137,29 @@ button.sidebar-section-title {
   background-repeat: no-repeat;
 }
 
+.checkbox:disabled {
+  @apply bg-gray-50 dark:bg-gray-700;
+  cursor: not-allowed;
+}
+
+.checkbox:hover:not(:disabled) {
+  cursor: pointer;
+}
+
+html.dark .fake-checkbox-indeterminate,
+html.dark .checkbox:indeterminate {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M0 0h16v16H0z'/%3E%3Cpath fill='%230F172A' fill-rule='nonzero' d='M12 8a1 1 0 0 1-.883.993L11 9H5a1 1 0 0 1-.117-1.993L5 7h6a1 1 0 0 1 1 1Z'/%3E%3C/g%3E%3C/svg%3E");
+  @apply bg-primary-500;
+}
+
+html.dark .fake-checkbox-checked,
 html.dark .checkbox:checked {
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' class='fill-current' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M5.707 7.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0-1.414-1.414L7 8.586 5.707 7.293z'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M0 0h16v16H0z'/%3E%3Cpath fill='%230F172A' fill-rule='nonzero' d='M5.695 7.28A1 1 0 0 0 4.28 8.696l2 2a1 1 0 0 0 1.414 0l4-4A1 1 0 0 0 10.28 5.28L6.988 8.574 5.695 7.28Z'/%3E%3C/g%3E%3C/svg%3E");
+  @apply bg-primary-500;
 }
 
 /* Tables
 ---------------------------------------------------------------------------- */
-.table-fixed {
-  table-layout: fixed;
-}
-
-.table {
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-
 .th-fit,
 .td-fit {
   width: 1%;
@@ -346,6 +190,20 @@ html.dark .checkbox:checked {
 }
 
 .v-popper--theme-tooltip .v-popper__arrow-inner {
+  visibility: hidden;
+}
+
+/* Plain Theme */
+
+.v-popper--theme-plain .v-popper__inner {
+  @apply rounded-lg shadow bg-white dark:bg-gray-900 text-gray-500 dark:text-white !important;
+}
+
+.v-popper--theme-plain .v-popper__arrow-outer {
+  visibility: hidden;
+}
+
+.v-popper--theme-plain .v-popper__arrow-inner {
   visibility: hidden;
 }
 
@@ -394,7 +252,7 @@ html.dark .checkbox:checked {
 }
 
 .form-input-border-error {
-  @apply border border-red-400 dark:border-red-500 ring focus:ring ring-red-100 dark:ring-red-300 dark:ring-opacity-20 !important;
+  @apply border border-red-400 dark:border-red-500 !important;
 }
 
 .form-input-row {
@@ -441,13 +299,17 @@ textarea.form-input:read-only,
   box-shadow: none;
 }
 
-input.form-input:read-only,
+input.form-input:read-only:not([type='color']),
 textarea.form-input:read-only,
 .form-input:disabled,
 .form-input.disabled,
 .form-select:disabled {
   @apply bg-gray-50 dark:bg-gray-700;
   cursor: not-allowed;
+}
+
+input.form-input[type='color']:not(:disabled) {
+  cursor: pointer;
 }
 
 .\!bg-white {
@@ -1000,6 +862,12 @@ textarea.form-input:read-only,
   @apply dark:ring-gray-600;
 }
 
+.link-default-error {
+  @apply no-underline text-red-500 font-bold rounded focus:outline-none focus:ring focus:ring-red-200;
+  @apply hover:text-red-400 active:text-red-600;
+  @apply dark:ring-gray-600;
+}
+
 /* Field Wrapper
 ---------------------------------------------------------------------------- */
 .field-wrapper:last-child {
@@ -1029,7 +897,7 @@ textarea.form-input:read-only,
 
 .chartist-tooltip:before {
   display: none;
-  border-top-color: var(--white) !important;
+  border-top-color: rgba(var(--colors-white), 1) !important;
 }
 
 /* Spin Animation
@@ -1131,7 +999,7 @@ textarea.form-input:read-only,
 .ct-series-a .ct-bar,
 .ct-series-a .ct-line,
 .ct-series-a .ct-point {
-  stroke: rgba(var(--colors-primary-500, 1)) !important;
+  stroke: rgba(var(--colors-primary-500), 1) !important;
   stroke-width: 2px;
 }
 
@@ -1148,7 +1016,8 @@ textarea.form-input:read-only,
 /* Trix
 ---------------------------------------------------------------------------- */
 trix-editor {
-  @apply rounded-lg;
+  @apply rounded-lg dark:bg-gray-900 dark:border-gray-700;
+  @apply dark:focus:bg-gray-900 focus:outline-none focus:ring ring-primary-100 dark:ring-gray-700;
 }
 
 .disabled trix-editor,
@@ -1157,7 +1026,11 @@ trix-editor {
 }
 
 .disabled trix-editor {
-  background-color: var(--30);
+  background-color: rgba(var(--colors-gray-50), 1);
+}
+
+.dark .disabled trix-editor {
+  background-color: rgba(var(--colors-gray-700), 1);
 }
 
 .disabled trix-toolbar {
@@ -1165,11 +1038,23 @@ trix-editor {
 }
 
 trix-editor:empty:not(:focus)::before {
-  color: var(--70);
+  color: rgba(var(--colors-gray-500), 1);
 }
 
 trix-editor.disabled {
   pointer-events: none;
+}
+
+trix-toolbar .trix-button-row .trix-button-group {
+  @apply dark:border-gray-900;
+}
+
+trix-toolbar .trix-button-row .trix-button-group .trix-button {
+  @apply dark:bg-gray-400 dark:border-gray-900 dark:hover:bg-gray-300;
+}
+
+trix-toolbar .trix-button-row .trix-button-group .trix-button.trix-active {
+  @apply dark:bg-gray-500;
 }
 
 /* Place Field
@@ -1221,7 +1106,8 @@ trix-editor.disabled {
 }
 
 .CodeMirror-cursor {
-  @apply dark:border-l-white;
+  border-left: 1px solid black;
+  @apply dark:border-white;
 }
 
 .cm-fat-cursor .CodeMirror-cursor {
@@ -1252,7 +1138,7 @@ trix-editor.disabled {
 }
 
 #nprogress .bar {
-  background: rgba(var(--colors-primary-500));
+  background: rgba(var(--colors-primary-500), 1);
   position: fixed;
   z-index: 1031;
   top: 0;

@@ -11,7 +11,7 @@
     ></p>
 
     <component
-      :is="`${mode}-${field.component}`"
+      :is="`form-${field.component}`"
       :errors="validationErrors"
       :resource-id="relationId"
       :resource-name="field.resourceName"
@@ -20,11 +20,12 @@
       :via-resource-id="field.from.viaResourceId"
       :via-relationship="field.from.viaRelationship"
       :form-unique-id="relationFormUniqueId"
+      :mode="mode"
       @field-changed="$emit('field-changed')"
       @file-deleted="$emit('update-last-retrieved-at-timestamp')"
       @file-upload-started="$emit('file-upload-started')"
       @file-upload-finished="$emit('file-upload-finished')"
-      :show-help-text="field.helpText != null"
+      :show-help-text="showHelpText"
     />
   </div>
 </template>
@@ -32,6 +33,7 @@
 <script>
 import { uid } from 'uid/single'
 import { BehavesAsPanel } from '@/mixins'
+import { mapProps } from '@/mixins'
 
 export default {
   name: 'FormRelationshipPanel',
@@ -51,6 +53,11 @@ export default {
       default: false,
     },
 
+    showHelpText: {
+      type: Boolean,
+      default: false,
+    },
+
     panel: {
       type: Object,
       required: true,
@@ -60,10 +67,7 @@ export default {
       default: 'Relationship Panel',
     },
 
-    mode: {
-      type: String,
-      default: 'form',
-    },
+    ...mapProps(['mode']),
 
     fields: {
       type: Array,
