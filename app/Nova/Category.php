@@ -4,6 +4,7 @@ namespace App\Nova;
 
 use Illuminate\Http\Request;
 use Laravel\Nova\Fields\BelongsTo;
+use Laravel\Nova\Fields\HasMany;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Http\Requests\NovaRequest;
@@ -47,6 +48,7 @@ class Category extends Resource
                 ->sortable()
                 ->rules('required', 'max:255'),
             BelongsTo::make('quiz'),
+            HasMany::make('questions'),
         ];
     }
 
