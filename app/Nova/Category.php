@@ -46,7 +46,7 @@ class Category extends Resource
             Text::make('Name')
                 ->sortable()
                 ->rules('required', 'max:255'),
-            BelongsTo::make('test'),
+            BelongsTo::make('quiz'),
         ];
     }
 

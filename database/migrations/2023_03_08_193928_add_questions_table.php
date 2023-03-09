@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('test_id');
+            $table->unsignedBigInteger('quiz_id');
             $table->unsignedBigInteger('category_id')->nullable();
             $table->text('name')->nullable();
             $table->text('question');

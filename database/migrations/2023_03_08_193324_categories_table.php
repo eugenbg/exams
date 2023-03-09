@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('test_id');
+            $table->unsignedBigInteger('quiz_id');
             $table->string('name');
             $table->timestamps();
         });

@@ -7,14 +7,14 @@ use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
-class Test extends Resource
+class Quiz extends Resource
 {
     /**
      * The model the resource corresponds to.
      *
      * @var string
      */
-    public static $model = \App\Models\Test::class;
+    public static $model = \App\Models\Quiz::class;
 
     /**
      * The single value that should be used to represent the resource when being displayed.

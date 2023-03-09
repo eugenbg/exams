@@ -52,7 +52,7 @@ class Question extends Resource
                 ->rules('max:255')
                 ->nullable(),
 
-            BelongsTo::make('test'),
+            BelongsTo::make('quiz'),
             BelongsTo::make('category')->nullable(),
 
             Markdown::make('Question'),
